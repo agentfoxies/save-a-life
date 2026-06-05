@@ -28,14 +28,17 @@ const Footer = () => {
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Crisis Resources</h3>
             <ul className="space-y-2">
-              <li className="text-sm text-gray-600 dark:text-gray-400">National Suicide Prevention Lifeline: <strong>988</strong></li>
+              <li className="text-sm text-gray-600 dark:text-gray-400">Suicide Prevention Lifeline: <strong>988</strong></li>
               <li className="text-sm text-gray-600 dark:text-gray-400">Crisis Text Line: Text <strong>HOME</strong> to 741741</li>
             </ul>
           </div>
         </div>
-        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-            © {new Date().getFullYear()} Save A Life. All rights reserved. Created by Malak K.
+        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            © {new Date().getFullYear()} Save A Life. All rights reserved.
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Founded by <span className="font-medium text-primary-600 dark:text-primary-400">Malak K</span> • Developed by <span className="font-medium text-teal-600 dark:text-teal-400">Malek Mostafa</span>
           </p>
         </div>
       </div>
