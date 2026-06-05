@@ -42,14 +42,7 @@ const Dashboard = () => {
     const currentPermission = Notification.permission
     
     if (currentPermission === 'denied') {
-      // Already denied - tell user how to fix
-      toast((t) => (
-        <div>
-          <p className="font-bold mb-1">Notifications are blocked</p>
-          <p className="text-sm">Click the 🔒 icon in your address bar and allow notifications, then try again.</p>
-          <button onClick={() => toast.dismiss(t.id)} className="mt-2 text-blue-500 underline">OK</button>
-        </div>
-      ), { duration: 8000 })
+      toast.error('Notifications blocked! Click the 🔒 icon in your address bar → Site Settings → Allow Notifications')
       return
     }
     
@@ -59,7 +52,6 @@ const Dashboard = () => {
       return
     }
     
-    // Ask for permission
     try {
       const permission = await Notification.requestPermission()
       if (permission === 'granted') {
@@ -70,7 +62,7 @@ const Dashboard = () => {
           icon: '/heart.svg'
         })
       } else if (permission === 'denied') {
-        toast.error('Blocked! Click the lock icon in address bar to allow notifications.')
+        toast.error('Blocked! Click the 🔒 icon in address bar to allow notifications.')
       }
     } catch (error) {
       toast.error('Could not request permission. Check browser settings.')
