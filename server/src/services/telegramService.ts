@@ -1,4 +1,4 @@
-const TELEGRAM_BOT_TOKEN = '8851638627:AAFltEn1Zt20xisi4NIEo3UXMVv3wIHuX_Y';
+const TELEGRAM_BOT_TOKEN = '8851638627:AAEj2dvBhwgnzYDQBrBOhM6WZIKSB5CAsj4';
 const TELEGRAM_CHAT_ID = '8547154870';
 
 export const sendTelegramNotification = async (senderName: string, content: string, roomId: string, suicideRisk: boolean) => {
@@ -15,18 +15,16 @@ export const sendTelegramNotification = async (senderName: string, content: stri
       suicideRisk ? '\n⚠️ *SUICIDE RISK DETECTED - Respond immediately!*' : ''
     ].join('\n');
 
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    
-    await fetch(url, {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: TELEGRAM_CHAT_ID,
         text: message,
-        parse_mode: 'Markdown',
-        disable_web_page_preview: false
+        parse_mode: 'Markdown'
       })
     });
+    console.log('Telegram notification sent');
   } catch (error) {
     console.error('Telegram notification failed:', error);
   }
@@ -44,9 +42,7 @@ export const sendNewVisitorNotification = async (displayName: string, roomId: st
       `🔗 [Open dashboard](${baseUrl}/support/${roomId})`
     ].join('\n');
 
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    
-    await fetch(url, {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -55,6 +51,7 @@ export const sendNewVisitorNotification = async (displayName: string, roomId: st
         parse_mode: 'Markdown'
       })
     });
+    console.log('Telegram visitor notification sent');
   } catch (error) {
     console.error('Telegram notification failed:', error);
   }
