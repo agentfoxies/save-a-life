@@ -13,7 +13,6 @@ import About from './pages/About'
 import Disclaimer from './pages/Disclaimer'
 import CrisisResources from './pages/CrisisResources'
 
-// Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('adminToken')
   if (!token) return <Navigate to="/admin/login" replace />
@@ -33,9 +32,7 @@ function App() {
               <Route path="/chat/:roomId" element={<ChatRoom />} />
               <Route path="/support/:roomId" element={<SupportChat />} />
               <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute><Dashboard /></ProtectedRoute>
-              } />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/about" element={<About />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
               <Route path="/resources" element={<CrisisResources />} />
