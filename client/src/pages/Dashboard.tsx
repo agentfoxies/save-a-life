@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
-import { HiChatBubbleLeftRight, HiMagnifyingGlass, HiTrash, HiBell, HiBellAlert, HiArchive, HiArrowPath } from 'react-icons/hi2'
+import { HiChatBubbleLeftRight, HiMagnifyingGlass, HiTrash, HiBell, HiBellAlert, HiArchiveBox, HiArrowPath } from 'react-icons/hi2'
 import toast from 'react-hot-toast'
 import { io } from 'socket.io-client'
 import { conversationService } from '../services/api'
@@ -228,7 +228,7 @@ const Dashboard = () => {
                         <button onClick={() => navigate(`/support/${conv.roomId}`)}
                           className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Reply</button>
                         <button onClick={() => handleStatusChange(conv.roomId, 'closed')}
-                          className="p-2 text-gray-400 hover:text-yellow-500" title="Close chat"><HiArchive className="w-5 h-5" /></button>
+                          className="p-2 text-gray-400 hover:text-yellow-500" title="Close chat"><HiArchiveBox className="w-5 h-5" /></button>
                       </>
                     ) : (
                       <button onClick={() => handleStatusChange(conv.roomId, 'active')}
