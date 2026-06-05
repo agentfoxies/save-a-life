@@ -35,24 +35,45 @@ const Dashboard = () => {
 
   const requestNotificationPermission = async () => {
     if (!('Notification' in window)) {
-      toast.error('Notifications not supported')
+      toast.error('Your browser does not support notifications')
       return
     }
+    
+    const currentPermission = Notification.permission
+    
+    if (currentPermission === 'denied') {
+      // Already denied - tell user how to fix
+      toast((t) => (
+        <div>
+          <p className="font-bold mb-1">Notifications are blocked</p>
+          <p className="text-sm">Click the 🔒 icon in your address bar and allow notifications, then try again.</p>
+          <button onClick={() => toast.dismiss(t.id)} className="mt-2 text-blue-500 underline">OK</button>
+        </div>
+      ), { duration: 8000 })
+      return
+    }
+    
+    if (currentPermission === 'granted') {
+      setNotificationsEnabled(true)
+      toast.success('Notifications already enabled!')
+      return
+    }
+    
+    // Ask for permission
     try {
       const permission = await Notification.requestPermission()
       if (permission === 'granted') {
         setNotificationsEnabled(true)
-        toast.success('Notifications enabled!')
-        new Notification('✅ Notifications working!', {
-          body: 'You will be notified when someone sends a message.',
+        toast.success('✅ Notifications enabled!')
+        new Notification('Notifications working!', {
+          body: 'You will be alerted of new messages.',
           icon: '/heart.svg'
         })
-      } else {
-        toast.error('Notifications blocked')
-        setNotificationsEnabled(false)
+      } else if (permission === 'denied') {
+        toast.error('Blocked! Click the lock icon in address bar to allow notifications.')
       }
     } catch (error) {
-      toast.error('Failed to enable notifications')
+      toast.error('Could not request permission. Check browser settings.')
     }
   }
 
@@ -161,9 +182,7 @@ const Dashboard = () => {
             onClick={() => navigate(`/support/${newMessageAlert.roomId}`)}>
             <div className="flex items-center space-x-3">
               <span className="text-2xl">🔔</span>
-              <div>
-                <p className="font-bold text-blue-800 dark:text-blue-200">New message from {newMessageAlert.senderName}!</p>
-              </div>
+              <div><p className="font-bold text-blue-800 dark:text-blue-200">New message from {newMessageAlert.senderName}!</p></div>
             </div>
             <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">Reply Now →</button>
           </motion.div>
@@ -175,16 +194,11 @@ const Dashboard = () => {
           <div className="glass-card rounded-2xl p-6"><p className="text-sm text-gray-500">Closed</p><p className="text-3xl font-bold text-gray-400">{stats.closedConversations || 0}</p></div>
         </div>
 
-        {/* Filter Tabs */}
         <div className="flex items-center space-x-2 mb-4">
           <button onClick={() => setFilter('active')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>
-            🟢 Active
-          </button>
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>🟢 Active</button>
           <button onClick={() => setFilter('closed')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'closed' ? 'bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>
-            📁 Closed
-          </button>
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'closed' ? 'bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>📁 Closed</button>
         </div>
 
         <div className="relative mb-6">
@@ -214,9 +228,7 @@ const Dashboard = () => {
                       }`}>{conv.status}</span>
                       {conv.anonymous && <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">Anon</span>}
                     </div>
-                    <div className="text-sm text-gray-500">
-                      Room: {conv.roomId?.substring(0, 8)}... • {format(new Date(conv.createdAt), 'MMM d, h:mm a')}
-                    </div>
+                    <div className="text-sm text-gray-500">Room: {conv.roomId?.substring(0, 8)}... • {format(new Date(conv.createdAt), 'MMM d, h:mm a')}</div>
                   </div>
                   <div className="flex items-center space-x-2">
                     {conv.status === 'active' ? (
@@ -224,15 +236,12 @@ const Dashboard = () => {
                         <button onClick={() => navigate(`/support/${conv.roomId}`)}
                           className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Reply</button>
                         <button onClick={() => handleStatusChange(conv.roomId, 'closed')}
-                          className="p-2 text-gray-400 hover:text-yellow-500 transition-colors" title="Close chat">
-                          <HiArchive className="w-5 h-5" />
-                        </button>
+                          className="p-2 text-gray-400 hover:text-yellow-500" title="Close chat"><HiArchive className="w-5 h-5" /></button>
                       </>
                     ) : (
                       <button onClick={() => handleStatusChange(conv.roomId, 'active')}
                         className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 flex items-center space-x-1">
-                        <HiArrowPath className="w-4 h-4" /><span>Reopen</span>
-                      </button>
+                        <HiArrowPath className="w-4 h-4" /><span>Reopen</span></button>
                     )}
                     {deleteConfirm === conv.roomId ? (
                       <div className="flex items-center space-x-2">
@@ -240,9 +249,7 @@ const Dashboard = () => {
                         <button onClick={() => setDeleteConfirm(null)} className="px-3 py-2 bg-gray-200 rounded-lg text-xs">Cancel</button>
                       </div>
                     ) : (
-                      <button onClick={() => setDeleteConfirm(conv.roomId)} className="p-2 text-gray-400 hover:text-red-500">
-                        <HiTrash className="w-5 h-5" />
-                      </button>
+                      <button onClick={() => setDeleteConfirm(conv.roomId)} className="p-2 text-gray-400 hover:text-red-500"><HiTrash className="w-5 h-5" /></button>
                     )}
                   </div>
                 </div>
