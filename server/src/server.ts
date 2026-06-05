@@ -17,6 +17,9 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 
+// Trust proxy for Render
+app.set('trust proxy', 1);
+
 const io = new Server(httpServer, {
   cors: { origin: '*', methods: ['GET', 'POST', 'DELETE', 'PATCH'] }
 });
@@ -27,7 +30,11 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(mongoSanitize());
 app.use(xss());
 
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 });
+const limiter = rateLimit({ 
+  windowMs: 15 * 60 * 1000, 
+  max: 1000,
+  validate: { xForwardedForHeader: false }
+});
 app.use('/api/', limiter);
 
 cloudinaryConfig();
@@ -41,9 +48,25 @@ app.get('/api/health', (req, res) => {
 
 setupSocketHandlers(io);
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/savealife')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB error:', err));
+// Use MONGODB_URI from environment, with fallback
+const MONGODB_URI = process.env.MONGODB_URI;
 
-const PORT = process.env.PORT || 5001;
-httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (!MONGODB_URI) {
+  console.error('ERROR: MONGODB_URI environment variable is not set!');
+  process.exit(1);
+}
+
+console.log('Connecting to MongoDB...');
+console.log('URI starts with:', MONGODB_URI.substring(0, 30) + '...');
+
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => {
+    console.error('MongoDB connection error:', err.message);
+    process.exit(1);
+  });
+
+const PORT = process.env.PORT || 10000;
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
