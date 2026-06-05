@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { ThemeProvider } from './context/ThemeContext'
 import { ChatProvider } from './context/ChatContext'
@@ -8,8 +8,17 @@ import JoinChat from './pages/JoinChat'
 import ChatRoom from './pages/ChatRoom'
 import SupportChat from './pages/SupportChat'
 import Dashboard from './pages/Dashboard'
+import AdminLogin from './pages/AdminLogin'
 import About from './pages/About'
 import Disclaimer from './pages/Disclaimer'
+import CrisisResources from './pages/CrisisResources'
+
+// Protected route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const token = localStorage.getItem('adminToken')
+  if (!token) return <Navigate to="/admin/login" replace />
+  return <>{children}</>
+}
 
 function App() {
   return (
@@ -23,9 +32,13 @@ function App() {
               <Route path="/join" element={<JoinChat />} />
               <Route path="/chat/:roomId" element={<ChatRoom />} />
               <Route path="/support/:roomId" element={<SupportChat />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute><Dashboard /></ProtectedRoute>
+              } />
               <Route path="/about" element={<About />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
+              <Route path="/resources" element={<CrisisResources />} />
             </Routes>
           </main>
           <Toaster position="top-right" />
