@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
-import { HiChatBubbleLeftRight, HiMagnifyingGlass, HiTrash, HiBell, HiBellAlert } from 'react-icons/hi2'
+import { HiChatBubbleLeftRight, HiMagnifyingGlass, HiTrash, HiBell, HiBellAlert, HiArchive, HiArrowPath } from 'react-icons/hi2'
 import toast from 'react-hot-toast'
 import { io } from 'socket.io-client'
 import { conversationService } from '../services/api'
@@ -25,101 +25,72 @@ const Dashboard = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [newMessageAlert, setNewMessageAlert] = useState<{roomId: string, senderName: string} | null>(null)
+  const [filter, setFilter] = useState<'active' | 'closed'>('active')
 
-  // Check notification status on load
   useEffect(() => {
     if ('Notification' in window) {
       setNotificationsEnabled(Notification.permission === 'granted')
     }
   }, [])
 
-  // Request notification permission
   const requestNotificationPermission = async () => {
     if (!('Notification' in window)) {
-      toast.error('Notifications not supported in this browser')
+      toast.error('Notifications not supported')
       return
     }
-    
     try {
       const permission = await Notification.requestPermission()
       if (permission === 'granted') {
         setNotificationsEnabled(true)
-        toast.success('Notifications enabled! You will be alerted of new messages.')
-        // Test notification
+        toast.success('Notifications enabled!')
         new Notification('✅ Notifications working!', {
-          body: 'You will now be notified when someone sends a message.',
+          body: 'You will be notified when someone sends a message.',
           icon: '/heart.svg'
         })
-      } else if (permission === 'denied') {
-        toast.error('Notifications blocked. Please allow notifications in your browser settings.')
-        setNotificationsEnabled(false)
       } else {
-        toast('Notification permission dismissed', { icon: 'ℹ️' })
+        toast.error('Notifications blocked')
+        setNotificationsEnabled(false)
       }
     } catch (error) {
-      console.error('Notification error:', error)
-      toast.error('Failed to enable notifications. Check browser settings.')
+      toast.error('Failed to enable notifications')
     }
   }
 
-  // Listen for new messages
   useEffect(() => {
     const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001'
     const socket = io(SOCKET_URL)
 
     socket.on('new_support_message', (data: { roomId: string; senderName: string; content: string; suicideRisk: boolean }) => {
-      // Browser notification
       if ('Notification' in window && Notification.permission === 'granted') {
         try {
-          new Notification(`📩 New message from ${data.senderName}`, {
+          const n = new Notification(`📩 ${data.senderName}`, {
             body: data.content.substring(0, 100),
             icon: '/heart.svg',
             tag: data.roomId,
-            requireInteraction: true,
-            vibrate: [200, 100, 200]
-          }).onclick = () => {
-            window.focus()
-            navigate(`/support/${data.roomId}`)
-          }
-        } catch (e) {
-          console.error('Notification error:', e)
-        }
+            requireInteraction: true
+          })
+          n.onclick = () => { window.focus(); navigate(`/support/${data.roomId}`) }
+        } catch (e) {}
       }
-
-      // In-app alert
       setNewMessageAlert(data)
       setTimeout(() => setNewMessageAlert(null), 8000)
       loadData()
     })
 
-    socket.on('new_visitor', (data: { roomId: string; displayName: string }) => {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        try {
-          new Notification(`🟢 ${data.displayName} joined!`, {
-            body: 'Someone is waiting for support',
-            icon: '/heart.svg',
-            requireInteraction: true
-          })
-        } catch (e) {
-          console.error('Notification error:', e)
-        }
-      }
-      loadData()
-    })
-
+    socket.on('new_visitor', () => loadData())
     return () => { socket.close() }
   }, [])
 
   const loadData = async () => {
     try {
       const [convResponse, statsResponse] = await Promise.all([
-        conversationService.getAll('active'),
+        conversationService.getAll(filter),
         conversationService.getStats(),
       ])
       setConversations(Array.isArray(convResponse.data) ? convResponse.data : [])
       setStats(statsResponse.data || { totalConversations: 0, activeConversations: 0, closedConversations: 0 })
     } catch (error) {
-      console.error('Error loading dashboard data:', error)
+      console.error('Error loading dashboard:', error)
     } finally {
       setIsLoading(false)
     }
@@ -129,7 +100,15 @@ const Dashboard = () => {
     loadData()
     const interval = setInterval(loadData, 10000)
     return () => clearInterval(interval)
-  }, [])
+  }, [filter])
+
+  const handleStatusChange = async (roomId: string, newStatus: 'active' | 'closed') => {
+    try {
+      await conversationService.updateStatus(roomId, newStatus)
+      toast.success(newStatus === 'active' ? 'Reopened' : 'Closed')
+      loadData()
+    } catch (error) { toast.error('Failed to update status') }
+  }
 
   const handleDelete = async (roomId: string) => {
     try {
@@ -160,14 +139,10 @@ const Dashboard = () => {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Support Dashboard</h1>
           <div className="flex items-center space-x-3">
-            <button 
-              onClick={requestNotificationPermission}
-              className={`px-4 py-2 rounded-lg text-sm flex items-center space-x-2 transition-colors ${
-                notificationsEnabled 
-                  ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                  : 'bg-yellow-500 text-white hover:bg-yellow-600'
-              }`}
-            >
+            <button onClick={requestNotificationPermission}
+              className={`px-4 py-2 rounded-lg text-sm flex items-center space-x-2 ${
+                notificationsEnabled ? 'bg-green-100 text-green-700' : 'bg-yellow-500 text-white hover:bg-yellow-600'
+              }`}>
               {notificationsEnabled ? <HiBellAlert className="w-4 h-4" /> : <HiBell className="w-4 h-4" />}
               <span>{notificationsEnabled ? 'Alerts ON' : 'Enable Alerts'}</span>
             </button>
@@ -187,20 +162,29 @@ const Dashboard = () => {
             <div className="flex items-center space-x-3">
               <span className="text-2xl">🔔</span>
               <div>
-                <p className="font-bold text-blue-800 dark:text-blue-200">New message!</p>
-                <p className="text-sm text-blue-600 dark:text-blue-300">From: {newMessageAlert.senderName}</p>
+                <p className="font-bold text-blue-800 dark:text-blue-200">New message from {newMessageAlert.senderName}!</p>
               </div>
             </div>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
-              Reply Now →
-            </button>
+            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">Reply Now →</button>
           </motion.div>
         )}
 
         <div className="grid grid-cols-3 gap-6 mb-8">
           <div className="glass-card rounded-2xl p-6"><p className="text-sm text-gray-500">Total Chats</p><p className="text-3xl font-bold">{stats.totalConversations || 0}</p></div>
-          <div className="glass-card rounded-2xl p-6"><p className="text-sm text-gray-500">Active Now</p><p className="text-3xl font-bold text-green-600">{stats.activeConversations || 0}</p></div>
+          <div className="glass-card rounded-2xl p-6"><p className="text-sm text-gray-500">Active</p><p className="text-3xl font-bold text-green-600">{stats.activeConversations || 0}</p></div>
           <div className="glass-card rounded-2xl p-6"><p className="text-sm text-gray-500">Closed</p><p className="text-3xl font-bold text-gray-400">{stats.closedConversations || 0}</p></div>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex items-center space-x-2 mb-4">
+          <button onClick={() => setFilter('active')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>
+            🟢 Active
+          </button>
+          <button onClick={() => setFilter('closed')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'closed' ? 'bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>
+            📁 Closed
+          </button>
         </div>
 
         <div className="relative mb-6">
@@ -214,7 +198,7 @@ const Dashboard = () => {
         ) : filteredConversations.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <HiChatBubbleLeftRight className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg">No active conversations</p>
+            <p className="text-lg">No {filter} conversations</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -223,22 +207,42 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center space-x-3 mb-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      {conv.status === 'active' && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
                       <h3 className="text-lg font-semibold">{conv.displayName}</h3>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        conv.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
+                      }`}>{conv.status}</span>
                       {conv.anonymous && <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">Anon</span>}
                     </div>
-                    <div className="text-sm text-gray-500">Room: {conv.roomId?.substring(0, 8)}... • {format(new Date(conv.createdAt), 'h:mm a')}</div>
+                    <div className="text-sm text-gray-500">
+                      Room: {conv.roomId?.substring(0, 8)}... • {format(new Date(conv.createdAt), 'MMM d, h:mm a')}
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <button onClick={() => navigate(`/support/${conv.roomId}`)}
-                      className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Reply</button>
+                  <div className="flex items-center space-x-2">
+                    {conv.status === 'active' ? (
+                      <>
+                        <button onClick={() => navigate(`/support/${conv.roomId}`)}
+                          className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Reply</button>
+                        <button onClick={() => handleStatusChange(conv.roomId, 'closed')}
+                          className="p-2 text-gray-400 hover:text-yellow-500 transition-colors" title="Close chat">
+                          <HiArchive className="w-5 h-5" />
+                        </button>
+                      </>
+                    ) : (
+                      <button onClick={() => handleStatusChange(conv.roomId, 'active')}
+                        className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 flex items-center space-x-1">
+                        <HiArrowPath className="w-4 h-4" /><span>Reopen</span>
+                      </button>
+                    )}
                     {deleteConfirm === conv.roomId ? (
                       <div className="flex items-center space-x-2">
                         <button onClick={() => handleDelete(conv.roomId)} className="px-3 py-2 bg-red-600 text-white rounded-lg text-xs">Confirm</button>
                         <button onClick={() => setDeleteConfirm(null)} className="px-3 py-2 bg-gray-200 rounded-lg text-xs">Cancel</button>
                       </div>
                     ) : (
-                      <button onClick={() => setDeleteConfirm(conv.roomId)} className="p-2 text-gray-400 hover:text-red-500"><HiTrash className="w-5 h-5" /></button>
+                      <button onClick={() => setDeleteConfirm(conv.roomId)} className="p-2 text-gray-400 hover:text-red-500">
+                        <HiTrash className="w-5 h-5" />
+                      </button>
                     )}
                   </div>
                 </div>
