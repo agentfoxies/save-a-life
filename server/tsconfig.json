@@ -12,8 +12,7 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "noImplicitAny": false,
-    "strictNullChecks": false,
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+    "strictNullChecks": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
