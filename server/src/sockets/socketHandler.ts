@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { Conversation } from '../models/Conversation';
 import { Message } from '../models/Message';
-import { handleAutoReply, clearAutoReply } from './autoReplier';
+import { handleAutoReply, loadRepliedRooms } from './autoReplier';
 
 interface User {
   socketId: string;
@@ -24,6 +24,9 @@ const detectSuicideRisk = (message: string): boolean => {
 };
 
 export const setupSocketHandlers = (io: Server) => {
+  // Load auto-replied rooms on startup
+  loadRepliedRooms();
+  
   io.on('connection', (socket: Socket) => {
     console.log('New client connected:', socket.id);
 
@@ -38,7 +41,6 @@ export const setupSocketHandlers = (io: Server) => {
         userId: socket.id, displayName, senderType, timestamp: new Date().toISOString()
       });
 
-      // Notify support dashboard of new user
       if (senderType === 'visitor') {
         io.emit('new_visitor', { roomId, displayName, timestamp: new Date().toISOString() });
       }
@@ -50,8 +52,10 @@ export const setupSocketHandlers = (io: Server) => {
       try {
         const { roomId, content, senderType, senderName, imageUrl } = data;
 
-        // Auto-reply for first visitor message
-        handleAutoReply(socket, io, data);
+        // Auto-reply only once for first visitor message
+        if (senderType === 'visitor') {
+          handleAutoReply(io, data);
+        }
 
         const isSuicideRisk = detectSuicideRisk(content);
 
@@ -70,9 +74,10 @@ export const setupSocketHandlers = (io: Server) => {
 
         io.to(roomId).emit('receive_message', { ...messageData, suicideRisk: isSuicideRisk });
 
-        // Notify support dashboard of new message
         if (senderType === 'visitor') {
-          io.emit('new_support_message', { roomId, senderName, content: content.trim().substring(0, 50), suicideRisk: isSuicideRisk });
+          io.emit('new_support_message', { 
+            roomId, senderName, content: content.trim().substring(0, 50), suicideRisk: isSuicideRisk 
+          });
         }
 
         if (isSuicideRisk && senderType === 'visitor') {
@@ -109,7 +114,6 @@ export const setupSocketHandlers = (io: Server) => {
         io.to(user.roomId).emit('user_offline', {
           userId: socket.id, displayName: user.displayName, timestamp: new Date().toISOString()
         });
-        clearAutoReply(user.roomId);
         users.delete(socket.id);
       }
       console.log('Client disconnected:', socket.id);
