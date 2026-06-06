@@ -72,9 +72,18 @@ const Dashboard = () => {
     try { await api.delete(`/conversations/${roomId}`); toast.success('Deleted'); setDeleteConfirm(null); loadData() } catch (error) { toast.error('Failed') }
   }
 
+  // Delete only current filter conversations
   const handleDeleteAll = async () => {
-    if (!window.confirm('Delete ALL conversations?')) return
-    try { await api.delete('/conversations'); toast.success('All deleted'); loadData() } catch (error) { toast.error('Failed') }
+    const label = filter === 'active' ? 'ALL active' : 'ALL closed'
+    if (!window.confirm(`Delete ${label} conversations? This cannot be undone!`)) return
+    try {
+      // Delete conversations one by one for the current filter
+      for (const conv of conversations) {
+        await api.delete(`/conversations/${conv.roomId}`)
+      }
+      toast.success(`All ${filter} conversations deleted`)
+      loadData()
+    } catch (error) { toast.error('Failed to delete all') }
   }
 
   const filteredConversations = conversations.filter(conv =>
@@ -92,8 +101,9 @@ const Dashboard = () => {
               <span>{notificationsEnabled ? 'Alerts ON' : 'Enable Alerts'}</span>
             </button>
             {conversations.length > 0 && (
-              <button onClick={handleDeleteAll} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 flex items-center space-x-2">
-                <HiTrash className="w-4 h-4" /><span>Delete All</span>
+              <button onClick={handleDeleteAll}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 flex items-center space-x-2">
+                <HiTrash className="w-4 h-4" /><span>Delete {filter === 'active' ? 'Active' : 'Closed'}</span>
               </button>
             )}
           </div>
