@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { HiHeart } from 'react-icons/hi2'
 
 const Footer = () => {
   return (
