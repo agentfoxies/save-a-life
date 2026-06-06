@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { HiHeart, HiLightBulb, HiShieldCheck, HiCodeBracket, HiStar, HiUserGroup } from 'react-icons/hi2'
+import { HiHeart, HiLightBulb, HiShieldCheck, HiCodeBracket, HiStar } from 'react-icons/hi2'
 import Footer from '../components/Footer'
 
 const About = () => {
