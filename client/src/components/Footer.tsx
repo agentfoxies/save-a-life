@@ -38,7 +38,7 @@ const Footer = () => {
             © {new Date().getFullYear()} Save A Life. All rights reserved.
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Founded by <span className="font-medium text-primary-600 dark:text-primary-400">Malak K</span> • Developed by <span className="font-medium text-teal-600 dark:text-teal-400">Malek Mostafa</span>
+            Founded by <span className="font-medium text-primary-600 dark:text-primary-400">Malak K</span> • Co-Founder & Developer <span className="font-medium text-teal-600 dark:text-teal-400">Malek Mostafa</span>
           </p>
         </div>
       </div>
