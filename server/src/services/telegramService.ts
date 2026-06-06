@@ -1,5 +1,5 @@
 const TELEGRAM_BOT_TOKEN = '8851638627:AAEj2dvBhwgnzYDQBrBOhM6WZIKSB5CAsj4';
-const TELEGRAM_CHAT_ID = '8547154870';
+const TELEGRAM_GROUP_ID = '-5136710309';
 
 export const sendTelegramNotification = async (senderName: string, content: string, roomId: string, suicideRisk: boolean) => {
   try {
@@ -19,12 +19,12 @@ export const sendTelegramNotification = async (senderName: string, content: stri
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
+        chat_id: TELEGRAM_GROUP_ID,
         text: message,
         parse_mode: 'Markdown'
       })
     });
-    console.log('Telegram notification sent');
+    console.log('✅ Telegram alert sent to group');
   } catch (error) {
     console.error('Telegram notification failed:', error);
   }
@@ -46,12 +46,12 @@ export const sendNewVisitorNotification = async (displayName: string, roomId: st
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
+        chat_id: TELEGRAM_GROUP_ID,
         text: message,
         parse_mode: 'Markdown'
       })
     });
-    console.log('Telegram visitor notification sent');
+    console.log('✅ Visitor alert sent to group');
   } catch (error) {
     console.error('Telegram notification failed:', error);
   }

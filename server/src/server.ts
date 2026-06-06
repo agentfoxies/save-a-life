@@ -44,6 +44,20 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', mongo: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' });
 });
 
+app.get('/api/test-telegram', async (req, res) => {
+  try {
+    const r = await fetch('https://api.telegram.org/bot8851638627:AAEj2dvBhwgnzYDQBrBOhM6WZIKSB5CAsj4/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: '-5136710309', text: '✅ Save A Life alerts connected to this group! All staff will be notified here.' })
+    });
+    const data = await r.json();
+    res.json({ ok: true, telegram: data });
+  } catch (e: any) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
 setupSocketHandlers(io);
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://mike2mememe_db_user:ameSxGP7OHeV2vx7@cluster0.rrrlxur.mongodb.net/savealife?retryWrites=true&w=majority&appName=Cluster0';
