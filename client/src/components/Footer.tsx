@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <HiHeart className="w-6 h-6 text-red-500" />
+              <img src="/logo.png" alt="Save A Life" className="w-6 h-6 rounded-full object-cover" />
               <span className="text-lg font-bold bg-gradient-to-r from-primary-600 to-indigo-600 bg-clip-text text-transparent">
                 Save A Life
               </span>
