@@ -9,6 +9,7 @@ import ChatRoom from './pages/ChatRoom'
 import SupportChat from './pages/SupportChat'
 import Dashboard from './pages/Dashboard'
 import AdminLogin from './pages/AdminLogin'
+import AdminPanel from './pages/AdminPanel'
 import About from './pages/About'
 import Disclaimer from './pages/Disclaimer'
 import CrisisResources from './pages/CrisisResources'
@@ -32,6 +33,7 @@ function App() {
               <Route path="/chat/:roomId" element={<ChatRoom />} />
               <Route path="/support/:roomId" element={<SupportChat />} />
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/panel" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/about" element={<About />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
