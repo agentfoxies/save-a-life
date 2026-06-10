@@ -6,6 +6,7 @@ export interface IAdmin extends Document {
   password: string;
   role: 'owner' | 'moderator' | 'volunteer';
   approved: boolean;
+  tokenVersion: number;
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -15,6 +16,7 @@ const AdminSchema = new Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['owner', 'moderator', 'volunteer'], default: 'volunteer' },
   approved: { type: Boolean, default: false },
+  tokenVersion: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 
