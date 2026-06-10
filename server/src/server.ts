@@ -73,3 +73,16 @@ const PORT = parseInt(process.env.PORT || '10000', 10);
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// TEMPORARY: Reset admin accounts
+app.get('/api/reset-admin', async (req, res) => {
+  const { Admin } = require('./models/Admin');
+  await Admin.deleteMany({});
+  await Admin.create({
+    username: 'malek',
+    password: 'SaveALife2024!',
+    role: 'owner',
+    approved: true
+  });
+  res.json({ message: 'Admin reset. Login with malek / SaveALife2024!' });
+});
