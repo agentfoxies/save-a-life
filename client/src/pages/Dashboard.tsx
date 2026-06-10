@@ -38,7 +38,7 @@ const Dashboard = () => {
       }
     }
     checkAuth()
-    const interval = setInterval(checkAuth, 30000)
+    const interval = setInterval(checkAuth, 5000)
     return () => clearInterval(interval)
   }, [])
 
