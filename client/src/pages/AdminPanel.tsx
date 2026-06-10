@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { HiShieldCheck, HiXMark, HiCheck, HiTrash } from 'react-icons/hi2'
+import { HiShieldCheck, HiCheck, HiTrash } from 'react-icons/hi2'
 import toast from 'react-hot-toast'
 import api from '../services/api'
 
