@@ -4,6 +4,7 @@ import { ThemeProvider } from './context/ThemeContext'
 import { ChatProvider } from './context/ChatContext'
 import Navbar from './components/Navbar'
 import LandingPage from './pages/LandingPage'
+import MoodCheck from './pages/MoodCheck'
 import JoinChat from './pages/JoinChat'
 import ChatRoom from './pages/ChatRoom'
 import SupportChat from './pages/SupportChat'
@@ -29,6 +30,7 @@ function App() {
           <main className="container mx-auto px-4 py-8">
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/mood" element={<MoodCheck />} />
               <Route path="/join" element={<JoinChat />} />
               <Route path="/chat/:roomId" element={<ChatRoom />} />
               <Route path="/support/:roomId" element={<SupportChat />} />

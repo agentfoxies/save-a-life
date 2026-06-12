@@ -36,7 +36,7 @@ const LandingPage = () => {
               </p>
             </motion.div>
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/join">
+              <Link to="/mood">
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn-primary px-8 py-4 rounded-full text-lg font-semibold flex items-center justify-center space-x-2">
                   <HiChatBubbleLeftRight className="w-6 h-6" /><span>Start Chat</span>
                 </motion.button>
