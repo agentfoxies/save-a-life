@@ -8,7 +8,7 @@ const api = axios.create({
 })
 
 export const conversationService = {
-  create: (data: { displayName: string; anonymous: boolean }) => api.post('/conversations', data),
+  create: (data: { displayName: string; anonymous: boolean; mood?: string }) => api.post('/conversations', data),
   get: (roomId: string) => api.get(`/conversations/${roomId}`),
   getAll: (status?: string) => api.get('/conversations', { params: { status } }),
   updateStatus: (roomId: string, status: string) => api.patch(`/conversations/${roomId}/status`, { status }),
