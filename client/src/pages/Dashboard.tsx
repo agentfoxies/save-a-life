@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
@@ -26,18 +26,27 @@ const Dashboard = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [newMessageAlert, setNewMessageAlert] = useState<{roomId: string, senderName: string} | null>(null)
   const [filter, setFilter] = useState<'active' | 'closed'>('active')
+  const heartbeatRef = useRef<ReturnType<typeof setInterval>>()
 
-  // Auto-set status to online when dashboard opens
+  // Heartbeat: keep sending "online" every 30 seconds. If stops, backend marks as offline.
   useEffect(() => {
-    const setOnline = async () => {
+    const sendHeartbeat = async () => {
       try {
         const token = localStorage.getItem('adminToken')
-        await axios.patch(`${API_URL}/auth/status`, { status: 'online' }, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        if (token) {
+          await axios.patch(`${API_URL}/auth/status`, { status: 'online' }, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        }
       } catch {}
     }
-    setOnline()
+    
+    sendHeartbeat() // Initial
+    heartbeatRef.current = setInterval(sendHeartbeat, 30000) // Every 30 seconds
+    
+    return () => {
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current)
+    }
   }, [])
 
   useEffect(() => {
