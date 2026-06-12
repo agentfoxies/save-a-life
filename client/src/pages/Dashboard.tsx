@@ -7,8 +7,8 @@ import toast from 'react-hot-toast'
 import { io } from 'socket.io-client'
 import { conversationService } from '../services/api'
 import api from '../services/api'
-import StaffStatus from "../components/StaffStatus"
-import StaffActivity from "../components/StaffActivity" '../components/StaffStatus'
+import StaffStatus from '../components/StaffStatus'
+import StaffActivity from '../components/StaffActivity'
 
 interface Conversation { roomId: string; displayName: string; anonymous: boolean; status: 'active' | 'closed'; createdAt: string; updatedAt: string; mood?: string }
 interface Stats { totalConversations: number; activeConversations: number; closedConversations: number }
@@ -29,8 +29,7 @@ const Dashboard = () => {
       try {
         const token = localStorage.getItem('adminToken')
         if (!token) { navigate('/admin/login'); return }
-        const res = await api.get('/auth/verify', { headers: { Authorization: `Bearer ${token}` } })
-        if (!res.data.user) { localStorage.clear(); navigate('/admin/login') }
+        await api.get('/auth/verify', { headers: { Authorization: `Bearer ${token}` } })
       } catch { localStorage.clear(); navigate('/admin/login') }
     }
     checkAuth()
@@ -42,19 +41,19 @@ const Dashboard = () => {
 
   const requestNotificationPermission = async () => {
     if (!('Notification' in window)) { toast.error('Not supported'); return }
-    if (Notification.permission === 'denied') { toast.error('Blocked! Click 🔒 in address bar.'); return }
-    if (Notification.permission === 'granted') { setNotificationsEnabled(true); toast.success('Already enabled!'); return }
+    if (Notification.permission === 'denied') { toast.error('Blocked'); return }
+    if (Notification.permission === 'granted') { setNotificationsEnabled(true); return }
     try {
       const p = await Notification.requestPermission()
-      if (p === 'granted') { setNotificationsEnabled(true); toast.success('✅ Enabled!'); new Notification('Working!', { body: 'Alerts active.', icon: '/favicon-new.png' }) }
+      if (p === 'granted') { setNotificationsEnabled(true); new Notification('Ready!', { body: 'Alerts active', icon: '/favicon-new.png' }) }
     } catch { toast.error('Failed') }
   }
 
   useEffect(() => {
-    const s = io(import.meta.env.VITE_SOCKET_URL || 'https://save-a-life-api.onrender.com')
+    const s = io('https://save-a-life-api.onrender.com')
     s.on('new_support_message', (d: any) => {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        try { const n = new Notification(`📩 ${d.senderName}`, { body: d.content?.substring(0, 100), icon: '/favicon-new.png', tag: d.roomId, requireInteraction: true }); n.onclick = () => { window.focus(); navigate(`/support/${d.roomId}`) } } catch {}
+      if (Notification.permission === 'granted') {
+        try { const n = new Notification(`📩 ${d.senderName}`, { body: d.content?.substring(0, 100), icon: '/favicon-new.png', tag: d.roomId }); n.onclick = () => { window.focus(); navigate(`/support/${d.roomId}`) } } catch {}
       }
       setNewMessageAlert(d); setTimeout(() => setNewMessageAlert(null), 8000); loadData()
     })
@@ -88,7 +87,7 @@ const Dashboard = () => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-20 px-4">
       <div className="container mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-4">
           <h1 className="text-4xl font-bold">Support Dashboard</h1>
           <div className="flex items-center space-x-3">
             <StaffStatus />
@@ -98,15 +97,14 @@ const Dashboard = () => {
             {conversations.length > 0 && <button onClick={handleDeleteAll} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm flex items-center space-x-2"><HiTrash className="w-4 h-4" /><span>Delete {filter}</span></button>}
           </div>
         </div>
+        <StaffActivity />
         {newMessageAlert && (
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-4 p-4 bg-blue-100 border-2 border-blue-400 rounded-xl flex items-center justify-between cursor-pointer" onClick={() => navigate(`/support/${newMessageAlert.roomId}`)}>
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-4 mt-4 p-4 bg-blue-100 border-2 border-blue-400 rounded-xl flex items-center justify-between cursor-pointer" onClick={() => navigate(`/support/${newMessageAlert.roomId}`)}>
             <div className="flex items-center space-x-3"><span>🔔</span><p className="font-bold">{newMessageAlert.senderName}!</p></div>
             <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Reply →</button>
           </motion.div>
         )}
-        <StaffActivity />
-        </div>
-        <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-3 gap-6 mb-8 mt-4">
           <div className="glass-card rounded-2xl p-6"><p className="text-sm text-gray-500">Total</p><p className="text-3xl font-bold">{stats.totalConversations || 0}</p></div>
           <div className="glass-card rounded-2xl p-6"><p className="text-sm text-gray-500">Active</p><p className="text-3xl font-bold text-green-600">{stats.activeConversations || 0}</p></div>
           <div className="glass-card rounded-2xl p-6"><p className="text-sm text-gray-500">Closed</p><p className="text-3xl font-bold text-gray-400">{stats.closedConversations || 0}</p></div>
