@@ -7,7 +7,8 @@ import toast from 'react-hot-toast'
 import { io } from 'socket.io-client'
 import { conversationService } from '../services/api'
 import api from '../services/api'
-import StaffStatus from '../components/StaffStatus'
+import StaffStatus from "../components/StaffStatus"
+import StaffActivity from "../components/StaffActivity" '../components/StaffStatus'
 
 interface Conversation { roomId: string; displayName: string; anonymous: boolean; status: 'active' | 'closed'; createdAt: string; updatedAt: string; mood?: string }
 interface Stats { totalConversations: number; activeConversations: number; closedConversations: number }
@@ -103,6 +104,8 @@ const Dashboard = () => {
             <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Reply →</button>
           </motion.div>
         )}
+        <StaffActivity />
+        </div>
         <div className="grid grid-cols-3 gap-6 mb-8">
           <div className="glass-card rounded-2xl p-6"><p className="text-sm text-gray-500">Total</p><p className="text-3xl font-bold">{stats.totalConversations || 0}</p></div>
           <div className="glass-card rounded-2xl p-6"><p className="text-sm text-gray-500">Active</p><p className="text-3xl font-bold text-green-600">{stats.activeConversations || 0}</p></div>
