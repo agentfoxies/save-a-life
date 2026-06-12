@@ -8,6 +8,7 @@ import {
   deleteConversation,
   deleteAllConversations
 } from '../controllers/conversationController';
+import { Conversation } from '../models/Conversation';
 
 const router = Router();
 
@@ -17,8 +18,21 @@ router.get('/:roomId', getConversation);
 router.get('/', getAllConversations);
 router.patch('/:roomId/status', updateConversationStatus);
 router.delete('/:roomId', deleteConversation);
-router.post("/:roomId/rating", (req, res) => { const { rating, feedback } = req.body; Conversation.findOneAndUpdate({ roomId: req.params.roomId }, { rating, feedback }, { new: true }).then(c => res.json(c)).catch(e => res.status(500).json({ error: e.message })); });
 router.delete('/', deleteAllConversations);
-router.post("/:roomId/rating", (req, res) => { const { rating, feedback } = req.body; Conversation.findOneAndUpdate({ roomId: req.params.roomId }, { rating, feedback }, { new: true }).then(c => res.json(c)).catch(e => res.status(500).json({ error: e.message })); });
+
+// Star rating route
+router.post('/:roomId/rating', async (req, res) => {
+  try {
+    const { rating, feedback } = req.body;
+    const conversation = await Conversation.findOneAndUpdate(
+      { roomId: req.params.roomId },
+      { rating, feedback },
+      { new: true }
+    );
+    res.json(conversation);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export { router as conversationRoutes };
