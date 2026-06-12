@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
-import { HiChatBubbleLeftRight, HiMagnifyingGlass, HiTrash, HiBell, HiBellAlert, HiArchiveBox, HiArrowPath } from 'react-icons/hi2'
+import { HiChatBubbleLeftRight, HiMagnifyingGlass, HiTrash, HiBell, HiBellAlert, HiArchiveBox, HiArrowPath } from "react-icons/hi2"
+import StaffStatus from "../components/StaffStatus" from 'react-icons/hi2'
 import toast from 'react-hot-toast'
 import { io } from 'socket.io-client'
 import { conversationService } from '../services/api'
@@ -96,7 +97,7 @@ const Dashboard = () => {
       <div className="container mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold">Support Dashboard</h1>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3"><StaffStatus />
             <button onClick={requestNotificationPermission} className={`px-4 py-2 rounded-lg text-sm flex items-center space-x-2 ${notificationsEnabled ? 'bg-green-100 text-green-700' : 'bg-yellow-500 text-white'}`}>
               {notificationsEnabled ? <HiBellAlert className="w-4 h-4" /> : <HiBell className="w-4 h-4" />}<span>{notificationsEnabled ? 'ON' : 'Alerts'}</span>
             </button>
@@ -105,7 +106,7 @@ const Dashboard = () => {
         </div>
         {newMessageAlert && (
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-4 p-4 bg-blue-100 border-2 border-blue-400 rounded-xl flex items-center justify-between cursor-pointer" onClick={() => navigate(`/support/${newMessageAlert.roomId}`)}>
-            <div className="flex items-center space-x-3"><span>🔔</span><p className="font-bold">{newMessageAlert.senderName}!</p></div>
+            <div className="flex items-center space-x-3"><StaffStatus /><span>🔔</span><p className="font-bold">{newMessageAlert.senderName}!</p></div>
             <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Reply →</button>
           </motion.div>
         )}
