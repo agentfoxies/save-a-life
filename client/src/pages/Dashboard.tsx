@@ -129,7 +129,8 @@ const Dashboard = () => {
                    {c.status === 'active' && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
                    <h3 className="text-lg font-semibold">{c.displayName}</h3>
                    <span className={`px-2 py-0.5 rounded-full text-xs ${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200'}`}>{c.status}</span>
-                   {c.anonymous && <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">Anon</span>}
+                   {c.anonymous {c.anonymous && <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">Anon</span>}{c.anonymous && <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">Anon</span>} <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">Anon</span>}
+                    {c.mood {c.anonymous && <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">Anon</span>}{c.anonymous && <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">Anon</span>} <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">{c.mood}</span>}
                  </div>
                  <div className="text-sm text-gray-500">Room: {c.roomId?.substring(0, 8)}... • {format(new Date(c.createdAt), 'MMM d, h:mm a')}</div>
                </div>
