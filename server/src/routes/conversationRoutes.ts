@@ -20,18 +20,17 @@ router.patch('/:roomId/status', updateConversationStatus);
 router.delete('/:roomId', deleteConversation);
 router.delete('/', deleteAllConversations);
 
-// Star rating route
 router.post('/:roomId/rating', async (req, res) => {
   try {
     const { rating, feedback } = req.body;
-    const conversation = await Conversation.findOneAndUpdate(
+    const c = await Conversation.findOneAndUpdate(
       { roomId: req.params.roomId },
       { rating, feedback },
       { new: true }
     );
-    res.json(conversation);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.json(c);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
   }
 });
 
