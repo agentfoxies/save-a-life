@@ -5,10 +5,13 @@ import { format } from 'date-fns'
 import { HiChatBubbleLeftRight, HiMagnifyingGlass, HiTrash, HiBell, HiBellAlert, HiArchiveBox, HiArrowPath } from 'react-icons/hi2'
 import toast from 'react-hot-toast'
 import { io } from 'socket.io-client'
+import axios from 'axios'
 import { conversationService } from '../services/api'
 import api from '../services/api'
 import StaffStatus from '../components/StaffStatus'
 import StaffActivity from '../components/StaffActivity'
+
+const API_URL = 'https://save-a-life-api.onrender.com/api'
 
 interface Conversation { roomId: string; displayName: string; anonymous: boolean; status: 'active' | 'closed'; createdAt: string; updatedAt: string; mood?: string }
 interface Stats { totalConversations: number; activeConversations: number; closedConversations: number }
@@ -23,6 +26,19 @@ const Dashboard = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [newMessageAlert, setNewMessageAlert] = useState<{roomId: string, senderName: string} | null>(null)
   const [filter, setFilter] = useState<'active' | 'closed'>('active')
+
+  // Auto-set status to online when dashboard opens
+  useEffect(() => {
+    const setOnline = async () => {
+      try {
+        const token = localStorage.getItem('adminToken')
+        await axios.patch(`${API_URL}/auth/status`, { status: 'online' }, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      } catch {}
+    }
+    setOnline()
+  }, [])
 
   useEffect(() => {
     const checkAuth = async () => {
