@@ -6,6 +6,8 @@ export interface IAdmin extends Document {
   password: string;
   role: 'owner' | 'moderator' | 'volunteer';
   approved: boolean;
+  currentStatus: string;
+  lastActive: Date;
   tokenVersion: number;
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;

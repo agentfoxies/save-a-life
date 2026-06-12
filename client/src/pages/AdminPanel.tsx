@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import axios from 'axios'
 
 interface Admin {
-  _id: string; username: string; role: string; approved: boolean; createdAt: string
+  _id: string; username: string; role: string; approved: boolean; currentStatus: string; lastActive: Date; createdAt: string
 }
 
 const API_URL = 'https://save-a-life-api.onrender.com/api'

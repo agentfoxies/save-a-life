@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import axios from 'axios'
+
+const API_URL = 'https://save-a-life-api.onrender.com/api'
 
 const statuses = [
   { id: 'online', label: 'Online', color: 'bg-green-500', emoji: '🟢' },
@@ -9,13 +12,20 @@ const statuses = [
 ]
 
 const StaffStatus = () => {
-  const [status, setStatus] = useState(() => localStorage.getItem('staffStatus') || 'online')
+  const [status, setStatus] = useState('online')
   const [open, setOpen] = useState(false)
 
-  const changeStatus = (newStatus: string) => {
+  const changeStatus = async (newStatus: string) => {
     setStatus(newStatus)
-    localStorage.setItem('staffStatus', newStatus)
     setOpen(false)
+    try {
+      const token = localStorage.getItem('adminToken')
+      await axios.patch(`${API_URL}/auth/status`, { status: newStatus }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    } catch (error) {
+      console.error('Failed to sync status')
+    }
   }
 
   const current = statuses.find(s => s.id === status) || statuses[0]

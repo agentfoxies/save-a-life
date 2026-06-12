@@ -74,6 +74,8 @@ export const approveAdmin = async (req: any, res: Response) => {
   }
 };
 
+export const updateStatus = async (req: any, res: Response) => { try { const { status } = req.body; if (!["online","busy","away","offline"].includes(status)) return res.status(400).json({ error: "Invalid" }); const a = await Admin.findByIdAndUpdate(req.admin.id, { currentStatus: status, lastActive: new Date() }, { new: true }).select("-password"); res.json(a); } catch (e) { res.status(500).json({ error: "Failed" }); } };
+
 export const removeAdmin = async (req: any, res: Response) => {
   try {
     if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owner can remove admins' });
@@ -127,5 +129,22 @@ export const verifyToken = async (req: Request, res: Response) => {
     res.json({ user: admin });
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// Update staff status
+export const updateStatus = async (req: any, res: Response) => {
+  try {
+    const { status } = req.body;
+    if (!['online', 'busy', 'away', 'offline'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    const admin = await Admin.findByIdAndUpdate(req.admin.id, { 
+      currentStatus: status,
+      lastActive: new Date()
+    }, { new: true }).select('-password');
+    res.json(admin);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update status' });
   }
 };
