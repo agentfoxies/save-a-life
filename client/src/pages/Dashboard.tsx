@@ -26,9 +26,9 @@ const Dashboard = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [newMessageAlert, setNewMessageAlert] = useState<{roomId: string, senderName: string} | null>(null)
   const [filter, setFilter] = useState<'active' | 'closed'>('active')
-  const heartbeatRef = useRef<ReturnType<typeof setInterval>>()
+  const [heartbeatStatus, setHeartbeatStatus] = useState('🟢')
 
-  // Heartbeat: keep sending "online" every 30 seconds. If stops, backend marks as offline.
+  // Heartbeat: send online status every 15 seconds
   useEffect(() => {
     const sendHeartbeat = async () => {
       try {
@@ -37,16 +37,17 @@ const Dashboard = () => {
           await axios.patch(`${API_URL}/auth/status`, { status: 'online' }, {
             headers: { Authorization: `Bearer ${token}` }
           })
+          setHeartbeatStatus('🟢')
         }
-      } catch {}
+      } catch {
+        setHeartbeatStatus('🔴')
+      }
     }
     
-    sendHeartbeat() // Initial
-    heartbeatRef.current = setInterval(sendHeartbeat, 30000) // Every 30 seconds
+    sendHeartbeat()
+    const interval = setInterval(sendHeartbeat, 15000)
     
-    return () => {
-      if (heartbeatRef.current) clearInterval(heartbeatRef.current)
-    }
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -113,7 +114,7 @@ const Dashboard = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-20 px-4">
       <div className="container mx-auto">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-4xl font-bold">Support Dashboard</h1>
+          <h1 className="text-4xl font-bold">Support Dashboard <span className="text-sm text-gray-400 ml-2">{heartbeatStatus}</span></h1>
           <div className="flex items-center space-x-3">
             <StaffStatus />
             <button onClick={requestNotificationPermission} className={`px-4 py-2 rounded-lg text-sm flex items-center space-x-2 ${notificationsEnabled ? 'bg-green-100 text-green-700' : 'bg-yellow-500 text-white'}`}>
