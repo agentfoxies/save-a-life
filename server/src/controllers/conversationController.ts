@@ -11,7 +11,7 @@ const anonymousNames = [
 
 export const createConversation = async (req: Request, res: Response) => {
   try {
-    const { displayName, anonymous } = req.body;
+    const { displayName, anonymous, mood } = req.body;
     const roomId = uuidv4();
     const finalDisplayName = anonymous 
       ? anonymousNames[Math.floor(Math.random() * anonymousNames.length)]
