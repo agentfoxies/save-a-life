@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { HiExclamationTriangle, HiShieldCheck, HiHeart } from 'react-icons/hi2'
+import { HiExclamationTriangle, HiHeart } from 'react-icons/hi2'
 import Footer from '../components/Footer'
 
 const Disclaimer = () => {
