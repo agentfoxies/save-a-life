@@ -58,6 +58,33 @@ export const approveAdmin = async (req: any, res: Response) => {
   } catch (error) { res.status(500).json({ error: 'Failed' }); }
 };
 
+export const promoteToOwner = async (req: any, res: Response) => {
+  try {
+    if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owner can promote' });
+    const admin = await Admin.findByIdAndUpdate(
+      req.params.adminId, 
+      { role: 'owner' }, 
+      { new: true }
+    ).select('-password');
+    if (!admin) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: `${admin.username} is now an owner!`, admin });
+  } catch (error) { res.status(500).json({ error: 'Failed' }); }
+};
+
+export const demoteToModerator = async (req: any, res: Response) => {
+  try {
+    if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owner can demote' });
+    if (req.params.adminId === req.admin.id) return res.status(400).json({ error: 'Cannot demote yourself' });
+    const admin = await Admin.findByIdAndUpdate(
+      req.params.adminId, 
+      { role: 'moderator' }, 
+      { new: true }
+    ).select('-password');
+    if (!admin) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: `${admin.username} is now a moderator`, admin });
+  } catch (error) { res.status(500).json({ error: 'Failed' }); }
+};
+
 export const removeAdmin = async (req: any, res: Response) => {
   try {
     if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owner' });

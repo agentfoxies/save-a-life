@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { HiShieldCheck, HiCheck, HiTrash } from 'react-icons/hi2'
+import { HiShieldCheck, HiCheck, HiTrash, HiArrowUp, HiArrowDown } from 'react-icons/hi2'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 
@@ -14,7 +14,7 @@ const AdminPanel = () => {
   const [admins, setAdmins] = useState<Admin[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const [stats, setStats] = useState({ total: 0, approved: 0, pending: 0 })
+  const [stats, setStats] = useState({ total: 0, approved: 0, pending: 0, owners: 0 })
 
   useEffect(() => {
     const userData = localStorage.getItem('adminUser')
@@ -35,7 +35,8 @@ const AdminPanel = () => {
       setStats({
         total: admins.length,
         approved: admins.filter((a: Admin) => a.approved).length,
-        pending: admins.filter((a: Admin) => !a.approved).length
+        pending: admins.filter((a: Admin) => !a.approved).length,
+        owners: admins.filter((a: Admin) => a.role === 'owner').length
       })
     } catch (error: any) {
       toast.error('Failed to load admins')
@@ -67,11 +68,26 @@ const AdminPanel = () => {
   const handleApprove = async (adminId: string) => {
     try {
       const token = getToken()
-      await axios.patch(`${API_URL}/auth/admins/${adminId}/approve`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      toast.success('Approved!')
-      loadAdmins()
+      await axios.patch(`${API_URL}/auth/admins/${adminId}/approve`, {}, { headers: { Authorization: `Bearer ${token}` } })
+      toast.success('Approved!'); loadAdmins()
+    } catch { toast.error('Failed') }
+  }
+
+  const handlePromote = async (adminId: string) => {
+    if (!window.confirm('Make this person an Owner? They will have full access.')) return
+    try {
+      const token = getToken()
+      await axios.patch(`${API_URL}/auth/admins/${adminId}/promote`, {}, { headers: { Authorization: `Bearer ${token}` } })
+      toast.success('Promoted to Owner!'); loadAdmins()
+    } catch { toast.error('Failed') }
+  }
+
+  const handleDemote = async (adminId: string) => {
+    if (!window.confirm('Demote this person to Moderator?')) return
+    try {
+      const token = getToken()
+      await axios.patch(`${API_URL}/auth/admins/${adminId}/demote`, {}, { headers: { Authorization: `Bearer ${token}` } })
+      toast.success('Demoted to Moderator'); loadAdmins()
     } catch { toast.error('Failed') }
   }
 
@@ -79,11 +95,8 @@ const AdminPanel = () => {
     if (!window.confirm('Remove this admin permanently?')) return
     try {
       const token = getToken()
-      await axios.delete(`${API_URL}/auth/admins/${adminId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      toast.success('Removed!')
-      loadAdmins()
+      await axios.delete(`${API_URL}/auth/admins/${adminId}`, { headers: { Authorization: `Bearer ${token}` } })
+      toast.success('Removed!'); loadAdmins()
     } catch { toast.error('Failed') }
   }
 
@@ -103,13 +116,14 @@ const AdminPanel = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold">Admin Management</h1>
-            <p className="text-gray-500">Manage staff access & view status</p>
+            <p className="text-gray-500">Manage staff access & roles</p>
           </div>
           <button onClick={loadAdmins} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Refresh</button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold">{stats.total}</p><p className="text-xs text-gray-500">Total Staff</p></div>
+        <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold">{stats.total}</p><p className="text-xs text-gray-500">Total</p></div>
+          <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold text-yellow-600">{stats.owners}</p><p className="text-xs text-gray-500">Owners</p></div>
           <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold text-green-600">{stats.approved}</p><p className="text-xs text-gray-500">Approved</p></div>
           <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold text-yellow-600">{stats.pending}</p><p className="text-xs text-gray-500">Pending</p></div>
         </div>
@@ -144,14 +158,24 @@ const AdminPanel = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      {!admin.approved && admin.role !== 'owner' && (
-                        <button onClick={() => handleApprove(admin._id)} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center space-x-1">
-                          <HiCheck className="w-4 h-4" /><span>Approve</span>
+                    <div className="flex items-center space-x-2">
+                      {!admin.approved && (
+                        <button onClick={() => handleApprove(admin._id)} className="px-3 py-2 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700 flex items-center space-x-1">
+                          <HiCheck className="w-3 h-3" /><span>Approve</span>
                         </button>
                       )}
-                      {admin.role !== 'owner' && (
-                        <button onClick={() => handleRemove(admin._id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                      {admin.approved && admin.role !== 'owner' && (
+                        <button onClick={() => handlePromote(admin._id)} className="p-2 text-gray-400 hover:text-yellow-500" title="Promote to Owner">
+                          <HiArrowUp className="w-4 h-4" />
+                        </button>
+                      )}
+                      {admin.role === 'owner' && admin.username !== user?.username && (
+                        <button onClick={() => handleDemote(admin._id)} className="p-2 text-gray-400 hover:text-blue-500" title="Demote to Moderator">
+                          <HiArrowDown className="w-4 h-4" />
+                        </button>
+                      )}
+                      {admin.username !== user?.username && (
+                        <button onClick={() => handleRemove(admin._id)} className="p-2 text-gray-400 hover:text-red-500">
                           <HiTrash className="w-5 h-5" />
                         </button>
                       )}
