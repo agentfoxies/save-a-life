@@ -55,6 +55,15 @@ const AdminPanel = () => {
     }
   }
 
+  const getLastActive = (lastActive?: string) => {
+    if (!lastActive) return ''
+    const diff = Math.floor((Date.now() - new Date(lastActive).getTime()) / 1000)
+    if (diff < 60) return 'Just now'
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+    return new Date(lastActive).toLocaleDateString()
+  }
+
   const handleApprove = async (adminId: string) => {
     try {
       const token = getToken()
@@ -113,6 +122,7 @@ const AdminPanel = () => {
           <div className="space-y-4">
             {admins.map((admin) => {
               const status = getStatusDisplay(admin)
+              const lastActive = getLastActive(admin.lastActive)
               return (
                 <motion.div key={admin._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-6">
                   <div className="flex items-center justify-between">
@@ -130,7 +140,7 @@ const AdminPanel = () => {
                           <span className="text-gray-500">Joined {new Date(admin.createdAt).toLocaleDateString()}</span>
                           <span>•</span>
                           <span className={status.color}>{status.text}</span>
-                          {admin.lastActive {admin.lastActive && <span className="text-gray-400 text-xs">• Last seen: {new Date(admin.lastActive).toLocaleTimeString()}</span>}{admin.lastActive && <span className="text-gray-400 text-xs">• Last seen: {new Date(admin.lastActive).toLocaleTimeString()}</span>} <span className="text-gray-400 text-xs">• Active: {(() => { const diff = Math.floor((Date.now() - new Date(admin.lastActive).getTime()) / 1000); return diff < 60 ? "Just now" : diff < 3600 ? Math.floor(diff/60) + "m ago" : Math.floor(diff/3600) + "h ago"; })()}</span>}
+                          {lastActive && <><span>•</span><span className="text-gray-400">Active: {lastActive}</span></>}
                         </div>
                       </div>
                     </div>
