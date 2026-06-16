@@ -50,7 +50,7 @@ const CrisisResources = () => {
           </div>
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">Crisis Resources</h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            If you or someone you know is in immediate danger, please use these resources.
+            If you or someone you know needs immediate crisis support, please use these resources.
             Help is available 24/7.
           </p>
         </motion.div>

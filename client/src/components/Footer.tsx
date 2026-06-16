@@ -13,7 +13,7 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Anonymous support and suicide prevention platform. You matter. Your life matters.
+              A safe space for anyone who needs someone to talk to platform. You matter. Your life matters.
             </p>
           </div>
           <div>

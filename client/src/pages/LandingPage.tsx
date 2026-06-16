@@ -28,17 +28,17 @@ const LandingPage = () => {
               <span className="bg-gradient-to-r from-primary-600 via-indigo-600 to-teal-500 bg-clip-text text-transparent">Save A Life</span>
             </motion.h1>
             <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 font-light">
-              Anonymous Support & Suicide Prevention
+              Anonymous Support Anonymous Support & Suicide Prevention Safe Space
             </motion.p>
             <motion.div variants={fadeInUp} className="glass-card rounded-2xl p-8 max-w-2xl mx-auto">
               <p className="text-lg text-gray-700 dark:text-gray-200 leading-relaxed">
-                We are a non-profit organization dedicated to providing support, understanding, and a safe space for anyone facing emotional struggles, mental health challenges, or thoughts of self-harm.
+                We are a non-profit organization dedicated to providing support, understanding, and a safe space for anyone facing emotional struggles, mental health challenges, or just need someone to talk to.
               </p>
             </motion.div>
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/mood">
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn-primary px-8 py-4 rounded-full text-lg font-semibold flex items-center justify-center space-x-2">
-                  <HiChatBubbleLeftRight className="w-6 h-6" /><span>Start Chat</span>
+                  <HiChatBubbleLeftRight className="w-6 h-6" /><span>Talk to Someone</span>
                 </motion.button>
               </Link>
               <motion.a href="#how-it-works" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn-secondary px-8 py-4 rounded-full text-lg font-semibold">Learn More</motion.a>

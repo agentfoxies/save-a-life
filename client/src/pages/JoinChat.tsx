@@ -100,7 +100,7 @@ const JoinChat = () => {
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
               onClick={handleJoin} disabled={isLoading}
               className="btn-primary w-full py-4 rounded-xl text-lg font-semibold disabled:opacity-50">
-              {isLoading ? 'Connecting...' : 'Join Chat'}
+              {isLoading ? 'Connecting...' : 'Start Talking'}
             </motion.button>
           </div>
         </motion.div>
