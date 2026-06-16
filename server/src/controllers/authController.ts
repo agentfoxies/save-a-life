@@ -3,14 +3,15 @@ import jwt from 'jsonwebtoken';
 import { Admin } from '../models/Admin';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'save-a-life-secret-key-change-in-production';
+const SUPER_OWNER = 'malek'; // Cannot be removed or demoted
 
 export const initializeAdmin = async () => {
   const adminCount = await Admin.countDocuments();
   if (adminCount === 0) {
     await Admin.create({
-      username: 'malek', password: 'SaveALife2024!', role: 'owner', approved: true, tokenVersion: 0
+      username: SUPER_OWNER, password: 'SaveALife2024!', role: 'owner', approved: true, tokenVersion: 0
     });
-    console.log('✅ Default owner created (username: malek)');
+    console.log('✅ Super Owner created (username: malek)');
   }
 };
 
@@ -52,7 +53,7 @@ export const getAdmins = async (req: any, res: Response) => {
 
 export const approveAdmin = async (req: any, res: Response) => {
   try {
-    if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owner' });
+    if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owners can approve' });
     const admin = await Admin.findByIdAndUpdate(req.params.adminId, { approved: true }, { new: true }).select('-password');
     res.json({ message: 'Approved', admin });
   } catch (error) { res.status(500).json({ error: 'Failed' }); }
@@ -60,12 +61,8 @@ export const approveAdmin = async (req: any, res: Response) => {
 
 export const promoteToOwner = async (req: any, res: Response) => {
   try {
-    if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owner can promote' });
-    const admin = await Admin.findByIdAndUpdate(
-      req.params.adminId, 
-      { role: 'owner' }, 
-      { new: true }
-    ).select('-password');
+    if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owners can promote' });
+    const admin = await Admin.findByIdAndUpdate(req.params.adminId, { role: 'owner' }, { new: true }).select('-password');
     if (!admin) return res.status(404).json({ error: 'Not found' });
     res.json({ message: `${admin.username} is now an owner!`, admin });
   } catch (error) { res.status(500).json({ error: 'Failed' }); }
@@ -73,26 +70,36 @@ export const promoteToOwner = async (req: any, res: Response) => {
 
 export const demoteToModerator = async (req: any, res: Response) => {
   try {
-    if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owner can demote' });
+    if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owners can demote' });
+    
+    // Check if trying to demote the super owner
+    const target = await Admin.findById(req.params.adminId);
+    if (!target) return res.status(404).json({ error: 'Not found' });
+    if (target.username === SUPER_OWNER) return res.status(403).json({ error: 'Cannot demote the Super Owner' });
     if (req.params.adminId === req.admin.id) return res.status(400).json({ error: 'Cannot demote yourself' });
-    const admin = await Admin.findByIdAndUpdate(
-      req.params.adminId, 
-      { role: 'moderator' }, 
-      { new: true }
-    ).select('-password');
-    if (!admin) return res.status(404).json({ error: 'Not found' });
-    res.json({ message: `${admin.username} is now a moderator`, admin });
+    
+    const admin = await Admin.findByIdAndUpdate(req.params.adminId, { role: 'moderator' }, { new: true }).select('-password');
+    res.json({ message: `${admin?.username} is now a moderator`, admin });
   } catch (error) { res.status(500).json({ error: 'Failed' }); }
 };
 
 export const removeAdmin = async (req: any, res: Response) => {
   try {
-    if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owner' });
+    if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owners can remove' });
+    
+    // Check if trying to remove the super owner
+    const target = await Admin.findById(req.params.adminId);
+    if (!target) return res.status(404).json({ error: 'Not found' });
+    if (target.username === SUPER_OWNER) return res.status(403).json({ error: 'Cannot remove the Super Owner' });
     if (req.params.adminId === req.admin.id) return res.status(400).json({ error: 'Cannot remove yourself' });
-    const admin = await Admin.findById(req.params.adminId);
-    if (!admin) return res.status(404).json({ error: 'Not found' });
-    admin.tokenVersion += 1;
-    await admin.save();
+    
+    // If another owner is trying to remove someone, require super owner approval
+    if (req.admin.username !== SUPER_OWNER && target.role === 'owner') {
+      return res.status(403).json({ error: 'Only the Super Owner (malek) can remove other owners' });
+    }
+    
+    target.tokenVersion += 1;
+    await target.save();
     await Admin.findByIdAndDelete(req.params.adminId);
     res.json({ message: 'Admin removed' });
   } catch (error) { res.status(500).json({ error: 'Failed' }); }

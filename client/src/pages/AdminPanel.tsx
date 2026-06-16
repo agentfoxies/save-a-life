@@ -147,7 +147,7 @@ const AdminPanel = () => {
                       <div>
                         <div className="flex items-center space-x-2">
                           <h3 className="font-semibold text-lg">{admin.username}</h3>
-                          {admin.role === 'owner' && <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">Owner</span>}
+                          {admin.username === "malek" ? <span className="text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded-full">👑 Super Owner</span> : admin.role === "owner" ? <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">Owner</span> : null}
                           {admin.role === 'moderator' && <span className="text-xs bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full">Mod</span>}
                         </div>
                         <div className="flex items-center space-x-3 text-sm mt-1">
