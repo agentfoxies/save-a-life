@@ -130,7 +130,7 @@ const AdminPanel = () => {
                           <span className="text-gray-500">Joined {new Date(admin.createdAt).toLocaleDateString()}</span>
                           <span>•</span>
                           <span className={status.color}>{status.text}</span>
-                          {admin.lastActive && <span className="text-gray-400 text-xs">• Last seen: {new Date(admin.lastActive).toLocaleTimeString()}</span>}
+                          {admin.lastActive {admin.lastActive && <span className="text-gray-400 text-xs">• Last seen: {new Date(admin.lastActive).toLocaleTimeString()}</span>}{admin.lastActive && <span className="text-gray-400 text-xs">• Last seen: {new Date(admin.lastActive).toLocaleTimeString()}</span>} <span className="text-gray-400 text-xs">• Active: {(() => { const diff = Math.floor((Date.now() - new Date(admin.lastActive).getTime()) / 1000); return diff < 60 ? "Just now" : diff < 3600 ? Math.floor(diff/60) + "m ago" : Math.floor(diff/3600) + "h ago"; })()}</span>}
                         </div>
                       </div>
                     </div>

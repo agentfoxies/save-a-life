@@ -19,7 +19,7 @@ const AdminSchema = new Schema({
   role: { type: String, enum: ['owner', 'moderator', 'volunteer'], default: 'volunteer' },
   approved: { type: Boolean, default: false },
   currentStatus: { type: String, enum: ['online', 'busy', 'away', 'offline'], default: 'offline' },
-  lastActive: { type: Date, default: Date.now },
+  lastActive: { type: Date },
   tokenVersion: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
