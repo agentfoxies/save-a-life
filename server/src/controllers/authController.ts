@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { Admin } from '../models/Admin';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'save-a-life-secret-key-change-in-production';
-const SUPER_OWNER = 'malek'; // Cannot be removed or demoted
+const SUPER_OWNER = 'malek';
 
 export const initializeAdmin = async () => {
   const adminCount = await Admin.countDocuments();
@@ -72,14 +72,17 @@ export const demoteToModerator = async (req: any, res: Response) => {
   try {
     if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owners can demote' });
     
-    // Check if trying to demote the super owner
     const target = await Admin.findById(req.params.adminId);
     if (!target) return res.status(404).json({ error: 'Not found' });
     if (target.username === SUPER_OWNER) return res.status(403).json({ error: 'Cannot demote the Super Owner' });
     if (req.params.adminId === req.admin.id) return res.status(400).json({ error: 'Cannot demote yourself' });
     
-    const admin = await Admin.findByIdAndUpdate(req.params.adminId, { role: 'moderator' }, { new: true }).select('-password');
-    res.json({ message: `${admin?.username} is now a moderator`, admin });
+    // Bump token version to force logout
+    target.tokenVersion += 1;
+    await target.save();
+    
+    const admin = await Admin.findByIdAndUpdate(req.params.adminId, { role: 'moderator', tokenVersion: target.tokenVersion }, { new: true }).select('-password');
+    res.json({ message: `${admin?.username} is now a moderator (logged out)`, admin });
   } catch (error) { res.status(500).json({ error: 'Failed' }); }
 };
 
@@ -87,15 +90,14 @@ export const removeAdmin = async (req: any, res: Response) => {
   try {
     if (req.admin.role !== 'owner') return res.status(403).json({ error: 'Only owners can remove' });
     
-    // Check if trying to remove the super owner
     const target = await Admin.findById(req.params.adminId);
     if (!target) return res.status(404).json({ error: 'Not found' });
     if (target.username === SUPER_OWNER) return res.status(403).json({ error: 'Cannot remove the Super Owner' });
     if (req.params.adminId === req.admin.id) return res.status(400).json({ error: 'Cannot remove yourself' });
     
-    // If another owner is trying to remove someone, require super owner approval
-    if (req.admin.username !== SUPER_OWNER && target.role === 'owner') {
-      return res.status(403).json({ error: 'Only the Super Owner (malek) can remove other owners' });
+    // Only Super Owner can remove other owners or anyone
+    if (req.admin.username !== SUPER_OWNER) {
+      return res.status(403).json({ error: 'Only the Super Owner (malek) can remove staff. Contact malek for approval.' });
     }
     
     target.tokenVersion += 1;
@@ -125,7 +127,7 @@ export const authMiddleware = async (req: any, res: Response, next: any) => {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     const admin = await Admin.findById(decoded.id);
     if (!admin || !admin.approved) return res.status(403).json({ error: 'Account not approved or deleted' });
-    if (decoded.tokenVersion !== admin.tokenVersion) return res.status(401).json({ error: 'Session expired' });
+    if (decoded.tokenVersion !== admin.tokenVersion) return res.status(401).json({ error: 'Session expired. Please login again.' });
     req.admin = decoded;
     next();
   } catch (error) { res.status(401).json({ error: 'Invalid token' }); }
