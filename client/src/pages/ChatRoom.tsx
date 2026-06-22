@@ -16,6 +16,7 @@ const ChatRoom = () => {
   const [isTyping, setIsTyping] = useState(false)
   const [typingUser, setTypingUser] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
@@ -28,20 +29,24 @@ const ChatRoom = () => {
 
   useEffect(() => {
     if (!socket || !roomId || !displayName) return
+
     socket.emit('join_room', { roomId, senderType: 'visitor', displayName })
 
     const loadMessages = async () => {
       try {
         const response = await messageService.getMessages(roomId)
-        if (response.data.messages) {
+        if (response.data.messages && Array.isArray(response.data.messages)) {
           response.data.messages.forEach((msg: any) => addMessage(msg))
         }
+        setLoadError(false)
       } catch (error) {
         console.error('Error loading messages:', error)
+        setLoadError(true)
       } finally {
         setIsLoading(false)
       }
     }
+
     loadMessages()
 
     socket.on('user_typing', (data: { displayName: string }) => {
@@ -114,10 +119,47 @@ const ChatRoom = () => {
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        {isLoading ? <div className="flex justify-center h-full items-center"><div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" /></div> :
-         messages.length === 0 ? <div className="flex items-center justify-center h-full"><div className="text-center"><HiExclamationTriangle className="w-16 h-16 text-gray-300 mx-auto mb-4" /><p className="text-gray-500">No messages yet.</p></div></div> :
-         <AnimatePresence>{messages.map((message) => <ChatMessage key={message._id} {...message} onDelete={handleDeleteMessage} />)}</AnimatePresence>}
-        {isTyping && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center space-x-2 text-sm text-gray-500"><div className="flex space-x-1"><div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" /><div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} /><div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} /></div><span>{typingUser} is typing...</span></motion.div>}
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full flex-col space-y-4">
+            <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-gray-500">Connecting to support...</p>
+          </div>
+        ) : loadError ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <HiExclamationTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+              <p className="text-gray-700 font-medium mb-2">Connection issue</p>
+              <p className="text-sm text-gray-500 mb-4">Messages couldn't load. You can still send messages.</p>
+              <button onClick={() => { setIsLoading(true); setLoadError(false); window.location.reload(); }} className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm">Retry</button>
+            </div>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <HiExclamationTriangle className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500 dark:text-gray-400">No messages yet. Start the conversation.</p>
+              <p className="text-sm text-gray-400 mt-1">Our support team will reply shortly.</p>
+            </div>
+          </div>
+        ) : (
+          <AnimatePresence>
+            {messages.map((message) => (
+              <ChatMessage key={message._id} {...message} onDelete={handleDeleteMessage} />
+            ))}
+          </AnimatePresence>
+        )}
+        {isTyping && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center space-x-2 text-sm text-gray-500">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+            <span>{typingUser} is typing...</span>
+          </motion.div>
+        )}
         <div ref={messagesEndRef} />
       </div>
       <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3">
