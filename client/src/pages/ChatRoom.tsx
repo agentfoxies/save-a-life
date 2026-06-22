@@ -16,7 +16,6 @@ const ChatRoom = () => {
   const [isTyping, setIsTyping] = useState(false)
   const [typingUser, setTypingUser] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
@@ -32,36 +31,34 @@ const ChatRoom = () => {
 
     socket.emit('join_room', { roomId, senderType: 'visitor', displayName })
 
+    // Try to load messages but don't block if it fails
     const loadMessages = async () => {
       try {
         const response = await messageService.getMessages(roomId)
-        if (response.data.messages && Array.isArray(response.data.messages)) {
+        if (response.data?.messages && Array.isArray(response.data.messages)) {
           response.data.messages.forEach((msg: any) => addMessage(msg))
         }
-        setLoadError(false)
       } catch (error) {
-        console.error('Error loading messages:', error)
-        setLoadError(true)
-      } finally {
-        setIsLoading(false)
+        console.log('Could not load previous messages, starting fresh')
       }
+      setIsLoading(false)
     }
 
+    // Set a timeout - if loading takes more than 5 seconds, just show the chat
+    const timeout = setTimeout(() => setIsLoading(false), 5000)
     loadMessages()
 
     socket.on('user_typing', (data: { displayName: string }) => {
-      setTypingUser(data.displayName)
-      setIsTyping(true)
+      setTypingUser(data.displayName); setIsTyping(true)
     })
     socket.on('user_stop_typing', () => {
-      setIsTyping(false)
-      setTypingUser('')
+      setIsTyping(false); setTypingUser('')
     })
 
     return () => {
+      clearTimeout(timeout)
       socket.emit('stop_typing', { roomId })
-      socket.off('user_typing')
-      socket.off('user_stop_typing')
+      socket.off('user_typing'); socket.off('user_stop_typing')
     }
   }, [socket, roomId, displayName])
 
@@ -69,8 +66,7 @@ const ChatRoom = () => {
     e.preventDefault()
     if (!newMessage.trim() || !socket || !roomId || !displayName) return
     socket.emit('send_message', { roomId, content: newMessage.trim(), senderType: 'visitor', senderName: displayName })
-    setNewMessage('')
-    socket.emit('stop_typing', { roomId })
+    setNewMessage(''); socket.emit('stop_typing', { roomId })
   }
 
   const handleTyping = () => {
@@ -85,26 +81,16 @@ const ChatRoom = () => {
     if (!file || !socket || !roomId || !displayName) return
     if (!file.type.startsWith('image/')) { toast.error('Please select an image file'); return }
     if (file.size > 5 * 1024 * 1024) { toast.error('Image must be less than 5MB'); return }
-    const formData = new FormData()
-    formData.append('image', file)
     try {
+      const formData = new FormData(); formData.append('image', file)
       const response = await messageService.uploadImage(formData)
       socket.emit('send_message', { roomId, content: '📷 Image', senderType: 'visitor', senderName: displayName, imageUrl: response.data.imageUrl })
-    } catch (error) { toast.error('Failed to upload image') }
+    } catch { toast.error('Failed to upload') }
   }
 
   const handleDeleteMessage = async (messageId: string) => {
     if (!socket || !roomId) return
-    try {
-      await messageService.deleteMessage(messageId)
-      socket.emit('delete_message', { roomId, messageId })
-      toast.success('Message deleted')
-    } catch (error) { toast.error('Failed to delete message') }
-  }
-
-  const handleLeave = () => {
-    if (socket) socket.emit('stop_typing', { roomId })
-    navigate('/')
+    try { await messageService.deleteMessage(messageId); socket.emit('delete_message', { roomId, messageId }); toast.success('Deleted') } catch { toast.error('Failed') }
   }
 
   return (
@@ -112,7 +98,7 @@ const ChatRoom = () => {
       <div className="glass-card border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <button onClick={handleLeave} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><HiArrowLeft className="w-5 h-5" /></button>
+            <button onClick={() => navigate('/')} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><HiArrowLeft className="w-5 h-5" /></button>
             <div><h2 className="font-semibold text-gray-900 dark:text-white">Support Chat</h2><p className="text-xs text-gray-500">{displayName} • Private Room</p></div>
           </div>
           <div className="flex items-center space-x-2"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /><span className="text-xs text-green-600">Connected</span></div>
@@ -122,16 +108,7 @@ const ChatRoom = () => {
         {isLoading ? (
           <div className="flex items-center justify-center h-full flex-col space-y-4">
             <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">Connecting to support...</p>
-          </div>
-        ) : loadError ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <HiExclamationTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-              <p className="text-gray-700 font-medium mb-2">Connection issue</p>
-              <p className="text-sm text-gray-500 mb-4">Messages couldn't load. You can still send messages.</p>
-              <button onClick={() => { setIsLoading(true); setLoadError(false); window.location.reload(); }} className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm">Retry</button>
-            </div>
+            <p className="text-sm text-gray-500">Connecting...</p>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -139,24 +116,16 @@ const ChatRoom = () => {
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                 <HiExclamationTriangle className="w-8 h-8 text-gray-400" />
               </div>
-              <p className="text-gray-500 dark:text-gray-400">No messages yet. Start the conversation.</p>
+              <p className="text-gray-500">No messages yet. Start the conversation.</p>
               <p className="text-sm text-gray-400 mt-1">Our support team will reply shortly.</p>
             </div>
           </div>
         ) : (
-          <AnimatePresence>
-            {messages.map((message) => (
-              <ChatMessage key={message._id} {...message} onDelete={handleDeleteMessage} />
-            ))}
-          </AnimatePresence>
+          <AnimatePresence>{messages.map((message) => <ChatMessage key={message._id} {...message} onDelete={handleDeleteMessage} />)}</AnimatePresence>
         )}
         {isTyping && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center space-x-2 text-sm text-gray-500">
-            <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-            </div>
+            <div className="flex space-x-1"><div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" /><div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} /><div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} /></div>
             <span>{typingUser} is typing...</span>
           </motion.div>
         )}
