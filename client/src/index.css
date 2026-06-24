@@ -17,7 +17,7 @@
     @apply bg-white/60 dark:bg-gray-800/60 backdrop-blur-2xl border border-white/30 dark:border-gray-700/30 shadow-2xl;
   }
   .glass-card-hover {
-    @apply hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-3xl hover:-translate-y-1 transition-all duration-300;
+    @apply hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300;
   }
   .btn-glow {
     @apply relative overflow-hidden;
