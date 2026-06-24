@@ -28,25 +28,18 @@ const Dashboard = () => {
   const [filter, setFilter] = useState<'active' | 'closed'>('active')
   const [heartbeatStatus, setHeartbeatStatus] = useState('🟢')
 
-  // Heartbeat: send online status every 15 seconds
   useEffect(() => {
     const sendHeartbeat = async () => {
       try {
         const token = localStorage.getItem('adminToken')
         if (token) {
-          await axios.patch(`${API_URL}/auth/status`, { status: 'online' }, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          await axios.patch(`${API_URL}/auth/status`, { status: 'online' }, { headers: { Authorization: `Bearer ${token}` } })
           setHeartbeatStatus('🟢')
         }
-      } catch {
-        setHeartbeatStatus('🔴')
-      }
+      } catch { setHeartbeatStatus('🔴') }
     }
-    
     sendHeartbeat()
     const interval = setInterval(sendHeartbeat, 15000)
-    
     return () => clearInterval(interval)
   }, [])
 
@@ -108,6 +101,17 @@ const Dashboard = () => {
     try { for (const c of conversations) await api.delete(`/conversations/${c.roomId}`); toast.success('Done'); loadData() } catch { toast.error('Failed') }
   }
 
+  const getMoodEmoji = (mood?: string) => {
+    switch (mood) {
+      case 'Good': return '😄'
+      case 'Okay': return '🙂'
+      case 'Neutral': return '😐'
+      case 'Sad': return '😔'
+      case 'Struggling': return '😢'
+      default: return ''
+    }
+  }
+
   const filtered = conversations.filter(c => c.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) || c.roomId?.toLowerCase().includes(searchTerm.toLowerCase()))
 
   return (
@@ -151,7 +155,7 @@ const Dashboard = () => {
                    <h3 className="text-lg font-semibold">{c.displayName}</h3>
                    <span className={`px-2 py-0.5 rounded-full text-xs ${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200'}`}>{c.status}</span>
                    {c.anonymous && <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">Anon</span>}
-                   {c.mood {c.mood && <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">{c.mood}</span>}{c.mood && <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">{c.mood}</span>} <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700 font-medium">{c.mood === "Good" ? "😄" : c.mood === "Okay" ? "🙂" : c.mood === "Neutral" ? "😐" : c.mood === "Sad" ? "😔" : c.mood === "Struggling" ? "😢" : ""} {c.mood}</span>}
+                   {c.mood && <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700 font-medium">{getMoodEmoji(c.mood)} {c.mood}</span>}
                  </div>
                  <div className="text-sm text-gray-500">Room: {c.roomId?.substring(0, 8)}... • {format(new Date(c.createdAt), 'MMM d, h:mm a')}</div>
                </div>
