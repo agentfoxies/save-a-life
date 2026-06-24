@@ -64,7 +64,8 @@ const Disclaimer = () => {
                   If you're having thoughts of self-harm or suicide, please reach out immediately:
                 </p>
                 <ul className="mt-3 space-y-2 text-red-700 dark:text-red-200">
-                  <li><strong>988 Suicide & Crisis Lifeline:</strong> Call or text 988</li>
+                  <li><strong>🇦🇪 UAE: 800-4673 (Mental Health) • 999 (Police) • 998 (Ambulance)
+                        <br />US: 988 Suicide 988 Suicide & Crisis Lifeline Crisis Lifeline:</strong> Call or text 988</li>
                   <li><strong>Crisis Text Line:</strong> Text HOME to 741741</li>
                   <li><strong>Emergency Services:</strong> Call 911</li>
                 </ul>

@@ -30,7 +30,7 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold text-white mb-4">Crisis Help</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><strong className="text-red-400">988</strong> - Suicide Lifeline</li>
+              <li><strong className="text-red-400">800-4673</strong> - UAE Mental Health</li>
               <li><strong className="text-red-400">741741</strong> - Crisis Text</li>
               <li><strong className="text-red-400">911</strong> - Emergency</li>
             </ul>
