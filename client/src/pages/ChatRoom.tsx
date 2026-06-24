@@ -11,7 +11,7 @@ import toast from 'react-hot-toast'
 const ChatRoom = () => {
   const { roomId } = useParams<{ roomId: string }>()
   const navigate = useNavigate()
-  const { socket, messages, displayName, showSuicideModal, setShowSuicideModal, addMessage } = useChat()
+  const { socket, messages, displayName, isConnected, showSuicideModal, setShowSuicideModal, addMessage } = useChat()
   const [newMessage, setNewMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [typingUser, setTypingUser] = useState('')
@@ -27,26 +27,13 @@ const ChatRoom = () => {
   useEffect(() => { scrollToBottom() }, [messages, scrollToBottom])
 
   useEffect(() => {
-    if (!socket || !roomId || !displayName) return
-
-    socket.emit('join_room', { roomId, senderType: 'visitor', displayName })
-
-    // Try to load messages but don't block if it fails
-    const loadMessages = async () => {
-      try {
-        const response = await messageService.getMessages(roomId)
-        if (response.data?.messages && Array.isArray(response.data.messages)) {
-          response.data.messages.forEach((msg: any) => addMessage(msg))
-        }
-      } catch (error) {
-        console.log('Could not load previous messages, starting fresh')
-      }
-      setIsLoading(false)
+    if (!socket || !roomId || !displayName) {
+      console.log('Waiting for socket...', { socket: !!socket, roomId, displayName })
+      return
     }
 
-    // Set a timeout - if loading takes more than 5 seconds, just show the chat
-    const timeout = setTimeout(() => setIsLoading(false), 5000)
-    loadMessages()
+    console.log('Joining room:', roomId)
+    socket.emit('join_room', { roomId, senderType: 'visitor', displayName })
 
     socket.on('user_typing', (data: { displayName: string }) => {
       setTypingUser(data.displayName); setIsTyping(true)
@@ -56,7 +43,6 @@ const ChatRoom = () => {
     })
 
     return () => {
-      clearTimeout(timeout)
       socket.emit('stop_typing', { roomId })
       socket.off('user_typing'); socket.off('user_stop_typing')
     }
@@ -64,9 +50,27 @@ const ChatRoom = () => {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim() || !socket || !roomId || !displayName) return
-    socket.emit('send_message', { roomId, content: newMessage.trim(), senderType: 'visitor', senderName: displayName })
-    setNewMessage(''); socket.emit('stop_typing', { roomId })
+    if (!newMessage.trim()) return
+    
+    if (!socket) {
+      toast.error('Not connected yet. Please wait...')
+      return
+    }
+    
+    if (!roomId || !displayName) {
+      toast.error('Missing room info. Please rejoin.')
+      return
+    }
+
+    console.log('Sending message:', newMessage.trim())
+    socket.emit('send_message', { 
+      roomId, 
+      content: newMessage.trim(), 
+      senderType: 'visitor', 
+      senderName: displayName 
+    })
+    setNewMessage('')
+    socket.emit('stop_typing', { roomId })
   }
 
   const handleTyping = () => {
@@ -99,17 +103,16 @@ const ChatRoom = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button onClick={() => navigate('/')} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><HiArrowLeft className="w-5 h-5" /></button>
-            <div><h2 className="font-semibold text-gray-900 dark:text-white">Support Chat</h2><p className="text-xs text-gray-500">{displayName} • Private Room</p></div>
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-white">Support Chat</h2>
+              <p className="text-xs text-gray-500">{displayName} • {isConnected ? '🟢 Connected' : '🟡 Connecting...'}</p>
+            </div>
           </div>
-          <div className="flex items-center space-x-2"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /><span className="text-xs text-green-600">Connected</span></div>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full flex-col space-y-4">
-            <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">Connecting...</p>
-          </div>
+          <div className="flex justify-center h-full items-center"><div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
@@ -136,7 +139,7 @@ const ChatRoom = () => {
           <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
           <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><HiPhoto className="w-5 h-5 text-gray-600" /></button>
           <textarea value={newMessage} onChange={(e) => { setNewMessage(e.target.value); handleTyping() }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e) } }} placeholder="Type your message..." rows={1} className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500" style={{ maxHeight: '120px' }} />
-          <motion.button type="submit" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} disabled={!newMessage.trim()} className="p-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 rounded-full text-white"><HiPaperAirplane className="w-5 h-5 transform rotate-90" /></motion.button>
+          <motion.button type="submit" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} disabled={!newMessage.trim() || !isConnected} className="p-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 rounded-full text-white"><HiPaperAirplane className="w-5 h-5 transform rotate-90" /></motion.button>
         </form>
       </div>
       <SuicideRiskModal isOpen={showSuicideModal} onClose={() => setShowSuicideModal(false)} />
