@@ -1,4 +1,3 @@
-import { Conversation } from "../models/Conversation";
 import { Router } from 'express';
 import {
   createConversation,
@@ -25,19 +24,12 @@ router.post('/:roomId/rating', async (req, res) => {
   try {
     const { rating, feedback } = req.body;
     const c = await Conversation.findOneAndUpdate(
-      { roomId: req.params.roomId },
-      { rating, feedback },
-      { new: true }
+      { roomId: req.params.roomId }, { rating, feedback }, { new: true }
     );
     res.json(c);
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
-export { router as conversationRoutes };
-
-// Add note to conversation
 router.post('/:roomId/notes', async (req, res) => {
   try {
     const { text, author } = req.body;
@@ -47,22 +39,16 @@ router.post('/:roomId/notes', async (req, res) => {
       { new: true }
     );
     res.json(conversation?.notes || []);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
-// Get notes for conversation
 router.get('/:roomId/notes', async (req, res) => {
   try {
     const conversation = await Conversation.findOne({ roomId: req.params.roomId });
     res.json(conversation?.notes || []);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
-// Delete a note
 router.delete('/:roomId/notes/:noteId', async (req, res) => {
   try {
     const conversation = await Conversation.findOneAndUpdate(
@@ -71,7 +57,7 @@ router.delete('/:roomId/notes/:noteId', async (req, res) => {
       { new: true }
     );
     res.json(conversation?.notes || []);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
+
+export { router as conversationRoutes };

@@ -9,6 +9,7 @@ export interface IConversation extends Document {
   handledBy: string;
   rating: number;
   feedback: string;
+  notes: Array<{ text: string; author: string; createdAt: Date }>;
   createdAt: Date;
   updatedAt: Date;
 }
