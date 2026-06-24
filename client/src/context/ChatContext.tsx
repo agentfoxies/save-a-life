@@ -2,29 +2,15 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { io, Socket } from 'socket.io-client'
 
 interface Message {
-  _id: string
-  roomId: string
-  senderType: 'visitor' | 'support'
-  senderName: string
-  content: string
-  imageUrl?: string
-  read: boolean
-  createdAt: string
-  suicideRisk?: boolean
+  _id: string; roomId: string; senderType: 'visitor' | 'support'
+  senderName: string; content: string; imageUrl?: string; read: boolean; createdAt: string; suicideRisk?: boolean
 }
 
 interface ChatContextType {
-  socket: Socket | null
-  messages: Message[]
-  isConnected: boolean
-  roomId: string | null
-  displayName: string | null
-  setRoomId: (id: string | null) => void
-  setDisplayName: (name: string | null) => void
-  addMessage: (message: Message) => void
-  clearChat: () => void
-  showSuicideModal: boolean
-  setShowSuicideModal: (show: boolean) => void
+  socket: Socket | null; messages: Message[]; isConnected: boolean; roomId: string | null; displayName: string | null
+  setRoomId: (id: string | null) => void; setDisplayName: (name: string | null) => void
+  addMessage: (message: Message) => void; clearChat: () => void
+  showSuicideModal: boolean; setShowSuicideModal: (show: boolean) => void
 }
 
 const ChatContext = createContext<ChatContextType>({
@@ -44,14 +30,17 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [showSuicideModal, setShowSuicideModal] = useState(false)
 
   useEffect(() => {
-    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001'
+    const SOCKET_URL = 'https://save-a-life-api.onrender.com'
     
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
     })
 
-    newSocket.on('connect', () => setIsConnected(true))
+    newSocket.on('connect', () => {
+      setIsConnected(true)
+      console.log('✅ Socket connected to', SOCKET_URL)
+    })
     newSocket.on('disconnect', () => setIsConnected(false))
 
     newSocket.on('receive_message', (message: Message) => {
@@ -67,24 +56,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => { newSocket.close() }
   }, [])
 
-  const addMessage = useCallback((message: Message) => {
-    setMessages(prev => [...prev, message])
-  }, [])
-
+  const addMessage = useCallback((message: Message) => { setMessages(prev => [...prev, message]) }, [])
   const clearChat = useCallback(() => {
-    setMessages([])
-    setRoomId(null)
-    setDisplayName(null)
-    localStorage.removeItem('roomId')
-    localStorage.removeItem('displayName')
+    setMessages([]); setRoomId(null); setDisplayName(null)
+    localStorage.removeItem('roomId'); localStorage.removeItem('displayName')
   }, [])
 
   return (
-    <ChatContext.Provider value={{
-      socket, messages, isConnected, roomId, displayName,
-      setRoomId, setDisplayName, addMessage, clearChat,
-      showSuicideModal, setShowSuicideModal,
-    }}>
+    <ChatContext.Provider value={{ socket, messages, isConnected, roomId, displayName, setRoomId, setDisplayName, addMessage, clearChat, showSuicideModal, setShowSuicideModal }}>
       {children}
     </ChatContext.Provider>
   )
