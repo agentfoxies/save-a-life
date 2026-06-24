@@ -25,6 +25,7 @@ export const createConversation = async (req: Request, res: Response) => {
       roomId,
       displayName: finalDisplayName,
       anonymous: anonymous || false,
+      mood: mood || '',
       status: 'active'
     });
 
@@ -34,6 +35,7 @@ export const createConversation = async (req: Request, res: Response) => {
       roomId: conversation.roomId,
       displayName: conversation.displayName,
       anonymous: conversation.anonymous,
+      mood: conversation.mood,
       status: conversation.status,
       createdAt: conversation.createdAt
     });
@@ -45,13 +47,10 @@ export const createConversation = async (req: Request, res: Response) => {
 
 export const getConversation = async (req: Request, res: Response) => {
   try {
-    const { roomId } = req.params;
-    const conversation = await Conversation.findOne({ roomId });
+    const conversation = await Conversation.findOne({ roomId: req.params.roomId });
     if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
     res.json(conversation);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch conversation' });
-  }
+  } catch (error) { res.status(500).json({ error: 'Failed to fetch conversation' }); }
 };
 
 export const getAllConversations = async (req: Request, res: Response) => {
@@ -61,46 +60,36 @@ export const getAllConversations = async (req: Request, res: Response) => {
     if (status && status !== 'all') query.status = status;
     const conversations = await Conversation.find(query).sort({ updatedAt: -1 }).limit(100);
     res.json(conversations);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch conversations' });
-  }
+  } catch (error) { res.status(500).json({ error: 'Failed to fetch conversations' }); }
 };
 
 export const updateConversationStatus = async (req: Request, res: Response) => {
   try {
-    const { roomId } = req.params;
     const { status } = req.body;
     if (!['active', 'closed'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
-    const conversation = await Conversation.findOneAndUpdate({ roomId }, { status }, { new: true });
+    const conversation = await Conversation.findOneAndUpdate({ roomId: req.params.roomId }, { status }, { new: true });
     if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
     res.json(conversation);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update conversation' });
-  }
+  } catch (error) { res.status(500).json({ error: 'Failed to update conversation' }); }
 };
 
 export const getStats = async (req: Request, res: Response) => {
   try {
-    const [totalConversations, activeConversations, closedConversations] = await Promise.all([
+    const [total, active, closed] = await Promise.all([
       Conversation.countDocuments(),
       Conversation.countDocuments({ status: 'active' }),
       Conversation.countDocuments({ status: 'closed' })
     ]);
-    res.json({ totalConversations, activeConversations, closedConversations, totalChats: totalConversations });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch stats' });
-  }
+    res.json({ totalConversations: total, activeConversations: active, closedConversations: closed });
+  } catch (error) { res.status(500).json({ error: 'Failed to fetch stats' }); }
 };
 
 export const deleteConversation = async (req: Request, res: Response) => {
   try {
-    const { roomId } = req.params;
-    await Message.deleteMany({ roomId });
-    await Conversation.findOneAndDelete({ roomId });
+    await Message.deleteMany({ roomId: req.params.roomId });
+    await Conversation.findOneAndDelete({ roomId: req.params.roomId });
     res.json({ message: 'Conversation deleted permanently' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete conversation' });
-  }
+  } catch (error) { res.status(500).json({ error: 'Failed to delete conversation' }); }
 };
 
 export const deleteAllConversations = async (req: Request, res: Response) => {
@@ -108,7 +97,5 @@ export const deleteAllConversations = async (req: Request, res: Response) => {
     await Message.deleteMany({});
     await Conversation.deleteMany({});
     res.json({ message: 'All conversations deleted permanently' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete all conversations' });
-  }
+  } catch (error) { res.status(500).json({ error: 'Failed to delete all conversations' }); }
 };
