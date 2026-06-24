@@ -21,6 +21,7 @@ const ConversationSchema = new Schema({
   status: { type: String, enum: ['active', 'closed'], default: 'active' },
   handledBy: { type: String },
   rating: { type: Number },
+  notes: [{ text: String, author: String, createdAt: { type: Date, default: Date.now } }],
   feedback: { type: String }
 }, {
   timestamps: true
