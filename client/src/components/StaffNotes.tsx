@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { HiPlus, HiTrash, HiClipboardList } from 'react-icons/hi2'
+import { HiPlus, HiTrash, HiClipboard } from 'react-icons/hi2'
 import { format } from 'date-fns'
 import axios from 'axios'
 import toast from 'react-hot-toast'
@@ -60,7 +60,7 @@ const StaffNotes = ({ roomId }: { roomId: string }) => {
         className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
           notes.length > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
         }`}>
-        <HiClipboardList className="w-4 h-4" />
+        <HiClipboard className="w-4 h-4" />
         <span>Notes {notes.length > 0 && `(${notes.length})`}</span>
       </motion.button>
 
