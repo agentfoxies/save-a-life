@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { HiPhone, HiGlobeAlt, HiHeart, HiFlag } from 'react-icons/hi2'
+import { HiHeart, HiFlag } from 'react-icons/hi2'
 import Footer from '../components/Footer'
 
 const CrisisResources = () => {
