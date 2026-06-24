@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { HiShieldCheck, HiChatBubbleLeftRight, HiUserGroup, HiLockClosed, HiHeart, HiStar, HiGlobeAlt, HiPhone } from 'react-icons/hi2'
+import { HiShieldCheck, HiChatBubbleLeftRight, HiUserGroup, HiLockClosed, HiGlobeAlt, HiPhone } from 'react-icons/hi2'
 import Footer from '../components/Footer'
 
 const fadeInUp = { initial: { opacity: 0, y: 60 }, animate: { opacity: 1, y: 0 } }
