@@ -15,10 +15,12 @@ const ChatRoom = () => {
   const [newMessage, setNewMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [typingUser, setTypingUser] = useState('')
-  const [isLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+
+  // Get displayName from localStorage as fallback
+  const name = displayName || localStorage.getItem('displayName') || 'Anonymous'
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -27,13 +29,9 @@ const ChatRoom = () => {
   useEffect(() => { scrollToBottom() }, [messages, scrollToBottom])
 
   useEffect(() => {
-    if (!socket || !roomId || !displayName) {
-      console.log('Waiting for socket...', { socket: !!socket, roomId, displayName })
-      return
-    }
+    if (!socket || !roomId) return
 
-    console.log('Joining room:', roomId)
-    socket.emit('join_room', { roomId, senderType: 'visitor', displayName })
+    socket.emit('join_room', { roomId, senderType: 'visitor', displayName: name })
 
     socket.on('user_typing', (data: { displayName: string }) => {
       setTypingUser(data.displayName); setIsTyping(true)
@@ -46,7 +44,7 @@ const ChatRoom = () => {
       socket.emit('stop_typing', { roomId })
       socket.off('user_typing'); socket.off('user_stop_typing')
     }
-  }, [socket, roomId, displayName])
+  }, [socket, roomId])
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,17 +55,16 @@ const ChatRoom = () => {
       return
     }
     
-    if (!roomId || !displayName) {
-      toast.error('Missing room info. Please rejoin.')
+    if (!roomId) {
+      toast.error('Missing room. Please rejoin.')
       return
     }
 
-    console.log('Sending message:', newMessage.trim())
     socket.emit('send_message', { 
       roomId, 
       content: newMessage.trim(), 
       senderType: 'visitor', 
-      senderName: displayName 
+      senderName: name 
     })
     setNewMessage('')
     socket.emit('stop_typing', { roomId })
@@ -75,20 +72,20 @@ const ChatRoom = () => {
 
   const handleTyping = () => {
     if (!socket || !roomId) return
-    socket.emit('typing', { roomId, displayName })
+    socket.emit('typing', { roomId, displayName: name })
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
     typingTimeoutRef.current = setTimeout(() => socket.emit('stop_typing', { roomId }), 1000)
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !socket || !roomId || !displayName) return
+    if (!file || !socket || !roomId) return
     if (!file.type.startsWith('image/')) { toast.error('Please select an image file'); return }
     if (file.size > 5 * 1024 * 1024) { toast.error('Image must be less than 5MB'); return }
     try {
       const formData = new FormData(); formData.append('image', file)
       const response = await messageService.uploadImage(formData)
-      socket.emit('send_message', { roomId, content: '📷 Image', senderType: 'visitor', senderName: displayName, imageUrl: response.data.imageUrl })
+      socket.emit('send_message', { roomId, content: '📷 Image', senderType: 'visitor', senderName: name, imageUrl: response.data.imageUrl })
     } catch { toast.error('Failed to upload') }
   }
 
@@ -105,15 +102,13 @@ const ChatRoom = () => {
             <button onClick={() => navigate('/')} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><HiArrowLeft className="w-5 h-5" /></button>
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-white">Support Chat</h2>
-              <p className="text-xs text-gray-500">{displayName} • {isConnected ? '🟢 Connected' : '🟡 Connecting...'}</p>
+              <p className="text-xs text-gray-500">{name} • {isConnected ? '🟢 Connected' : '🟡 Connecting...'}</p>
             </div>
           </div>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        {isLoading ? (
-          <div className="flex justify-center h-full items-center"><div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>
-        ) : messages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
