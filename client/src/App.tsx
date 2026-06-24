@@ -14,7 +14,7 @@ import AdminPanel from './pages/AdminPanel'
 import About from './pages/About'
 import Disclaimer from './pages/Disclaimer'
 import CrisisResources from "./pages/CrisisResources"
-import ScrollToTop from "./components/ScrollToTop" from './pages/CrisisResources'
+import ScrollToTop from "./components/ScrollToTop"
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('adminToken')
