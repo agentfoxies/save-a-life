@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { HiPaperAirplane, HiArrowLeft, HiExclamationTriangle } from "react-icons/hi2"
-import StaffNotes from "../components/StaffNotes" 'react-icons/hi2'
+import StaffNotes from "../components/StaffNotes"
 import { io, Socket } from 'socket.io-client'
 import ChatMessage from '../components/ChatMessage'
 import SuicideRiskModal from '../components/SuicideRiskModal'
