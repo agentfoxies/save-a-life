@@ -13,7 +13,8 @@ import AdminLogin from './pages/AdminLogin'
 import AdminPanel from './pages/AdminPanel'
 import About from './pages/About'
 import Disclaimer from './pages/Disclaimer'
-import CrisisResources from './pages/CrisisResources'
+import CrisisResources from "./pages/CrisisResources"
+import ScrollToTop from "./components/ScrollToTop" from './pages/CrisisResources'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('adminToken')
@@ -26,6 +27,7 @@ function App() {
     <ThemeProvider>
       <ChatProvider>
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-primary-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+          <ScrollToTop />
           <Navbar />
           <main className="container mx-auto px-4 py-8">
             <Routes>
