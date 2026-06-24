@@ -25,9 +25,17 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [socket, setSocket] = useState<Socket | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [isConnected, setIsConnected] = useState(false)
-  const [roomId, setRoomId] = useState<string | null>(null)
+  const [roomId, _setRoomId] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [showSuicideModal, setShowSuicideModal] = useState(false)
+
+  // Custom setRoomId that clears messages
+  const setRoomId = (id: string | null) => {
+    if (id !== roomId) {
+      setMessages([]) // Clear messages when room changes
+    }
+    _setRoomId(id)
+  }
 
   useEffect(() => {
     const SOCKET_URL = 'https://save-a-life-api.onrender.com'
@@ -37,10 +45,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       autoConnect: true,
     })
 
-    newSocket.on('connect', () => {
-      setIsConnected(true)
-      console.log('✅ Socket connected to', SOCKET_URL)
-    })
+    newSocket.on('connect', () => setIsConnected(true))
     newSocket.on('disconnect', () => setIsConnected(false))
 
     newSocket.on('receive_message', (message: Message) => {
@@ -58,7 +63,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addMessage = useCallback((message: Message) => { setMessages(prev => [...prev, message]) }, [])
   const clearChat = useCallback(() => {
-    setMessages([]); setRoomId(null); setDisplayName(null)
+    setMessages([]); _setRoomId(null); setDisplayName(null)
     localStorage.removeItem('roomId'); localStorage.removeItem('displayName')
   }, [])
 

@@ -31,7 +31,7 @@ const ChatRoom = () => {
   useEffect(() => {
     if (!socket || !roomId) return
 
-    socket.emit('join_room', { roomId, senderType: 'visitor', displayName: name })
+    socket.emit("join_room", { roomId, senderType: "visitor", displayName: name })
 
     socket.on('user_typing', (data: { displayName: string }) => {
       setTypingUser(data.displayName); setIsTyping(true)
