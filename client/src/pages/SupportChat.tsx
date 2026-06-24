@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { HiPaperAirplane, HiArrowLeft, HiExclamationTriangle } from "react-icons/hi2"
-import StaffNotes from "../components/StaffNotes"
+import { HiPaperAirplane, HiArrowLeft, HiExclamationTriangle } from 'react-icons/hi2'
+import StaffNotes from '../components/StaffNotes'
 import { io, Socket } from 'socket.io-client'
 import ChatMessage from '../components/ChatMessage'
 import SuicideRiskModal from '../components/SuicideRiskModal'
@@ -40,7 +40,7 @@ const SupportChat = () => {
 
     const loadMessages = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
+        const API_URL = 'https://save-a-life-api.onrender.com/api'
         const response = await fetch(`${API_URL}/messages/${roomId}`)
         const data = await response.json()
         setMessages(data.messages || [])
@@ -60,8 +60,7 @@ const SupportChat = () => {
     e.preventDefault()
     if (!newMessage.trim() || !socket || !roomId) return
     socket.emit('send_message', { roomId, content: newMessage.trim(), senderType: 'support', senderName: supportName })
-    setNewMessage('')
-    socket.emit('stop_typing', { roomId })
+    setNewMessage(''); socket.emit('stop_typing', { roomId })
   }
 
   const handleTyping = () => {
@@ -73,12 +72,7 @@ const SupportChat = () => {
 
   const handleDeleteMessage = async (messageId: string) => {
     if (!socket || !roomId) return
-    try {
-      await messageService.deleteMessage(messageId)
-      socket.emit('delete_message', { roomId, messageId })
-      setMessages(prev => prev.filter(msg => msg._id !== messageId))
-      toast.success('Message deleted')
-    } catch (error) { toast.error('Failed to delete message') }
+    try { await messageService.deleteMessage(messageId); socket.emit('delete_message', { roomId, messageId }); setMessages(prev => prev.filter(msg => msg._id !== messageId)); toast.success('Deleted') } catch { toast.error('Failed') }
   }
 
   return (
@@ -89,7 +83,10 @@ const SupportChat = () => {
             <button onClick={() => navigate('/dashboard')} className="p-2 rounded-full hover:bg-gray-100"><HiArrowLeft className="w-5 h-5" /></button>
             <div><h2 className="font-semibold">Support Chat</h2><p className="text-xs text-gray-500">Room: {roomId?.substring(0, 8)}...</p></div>
           </div>
-          <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">Support Team</span>
+          <div className="flex items-center space-x-3">
+            <StaffNotes roomId={roomId || ''} />
+            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">Support Team</span>
+          </div>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-6">
