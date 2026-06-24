@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
-import { HiChatBubbleLeftRight, HiMagnifyingGlass, HiTrash, HiBell, HiBellAlert, HiArchiveBox, HiArrowPath, HiSparkles, HiChartBar } from 'react-icons/hi2'
+import { HiChatBubbleLeftRight, HiMagnifyingGlass, HiTrash, HiBell, HiBellAlert, HiArchiveBox, HiArrowPath, HiSparkles, HiChartBar, HiGlobeAlt } from 'react-icons/hi2'
 import toast from 'react-hot-toast'
 import { io } from 'socket.io-client'
 import axios from 'axios'
 import { conversationService } from '../services/api'
 import api from '../services/api'
 import StaffStatus from '../components/StaffStatus'
-import StaffActivity from '../components/StaffActivity'
 
 const API_URL = 'https://save-a-life-api.onrender.com/api'
 
@@ -27,7 +26,6 @@ const Dashboard = () => {
   const [newMessageAlert, setNewMessageAlert] = useState<{roomId: string, senderName: string} | null>(null)
   const [filter, setFilter] = useState<'active' | 'closed'>('active')
 
-  // Heartbeat + Auto-away on tab switch
   useEffect(() => {
     const updateStatus = async (status: string) => {
       try {
@@ -35,30 +33,17 @@ const Dashboard = () => {
         if (token) await axios.patch(`${API_URL}/auth/status`, { status }, { headers: { Authorization: `Bearer ${token}` } })
       } catch {}
     }
-
     updateStatus('online')
     const heartbeat = setInterval(() => updateStatus('online'), 15000)
-
-    const handleVisibility = () => {
-      updateStatus(document.hidden ? 'away' : 'online')
-    }
+    const handleVisibility = () => updateStatus(document.hidden ? 'away' : 'online')
     document.addEventListener('visibilitychange', handleVisibility)
-
-    return () => {
-      clearInterval(heartbeat)
-      document.removeEventListener('visibilitychange', handleVisibility)
-    }
+    return () => { clearInterval(heartbeat); document.removeEventListener('visibilitychange', handleVisibility) }
   }, [])
 
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        const token = localStorage.getItem('adminToken')
-        if (!token) { navigate('/admin/login'); return }
-        await api.get('/auth/verify', { headers: { Authorization: `Bearer ${token}` } })
-      } catch { localStorage.clear(); navigate('/admin/login') }
-    }
-    checkAuth(); const i = setInterval(checkAuth, 5000); return () => clearInterval(i)
+      try { const token = localStorage.getItem('adminToken'); if (!token) { navigate('/admin/login'); return }; await api.get('/auth/verify', { headers: { Authorization: `Bearer ${token}` } }) } catch { localStorage.clear(); navigate('/admin/login') }
+    }; checkAuth(); const i = setInterval(checkAuth, 5000); return () => clearInterval(i)
   }, [])
 
   useEffect(() => { if ('Notification' in window) setNotificationsEnabled(Notification.permission === 'granted') }, [])
@@ -67,10 +52,7 @@ const Dashboard = () => {
     if (!('Notification' in window)) { toast.error('Not supported'); return }
     if (Notification.permission === 'denied') { toast.error('Blocked'); return }
     if (Notification.permission === 'granted') { setNotificationsEnabled(true); return }
-    try {
-      const p = await Notification.requestPermission()
-      if (p === 'granted') { setNotificationsEnabled(true); new Notification('Ready!', { body: 'Alerts active' }) }
-    } catch {}
+    try { const p = await Notification.requestPermission(); if (p === 'granted') { setNotificationsEnabled(true) } } catch {}
   }
 
   useEffect(() => {
@@ -86,13 +68,8 @@ const Dashboard = () => {
   }, [])
 
   const loadData = async () => {
-    try {
-      const [c, st] = await Promise.all([conversationService.getAll(filter), conversationService.getStats()])
-      setConversations(Array.isArray(c.data) ? c.data : [])
-      setStats(st.data || { totalConversations: 0, activeConversations: 0, closedConversations: 0 })
-    } catch {} finally { setIsLoading(false) }
+    try { const [c, st] = await Promise.all([conversationService.getAll(filter), conversationService.getStats()]); setConversations(Array.isArray(c.data) ? c.data : []); setStats(st.data || { totalConversations: 0, activeConversations: 0, closedConversations: 0 }) } catch {} finally { setIsLoading(false) }
   }
-
   useEffect(() => { loadData(); const i = setInterval(loadData, 10000); return () => clearInterval(i) }, [filter])
 
   const handleStatusChange = async (roomId: string, s: 'active' | 'closed') => {
@@ -105,82 +82,175 @@ const Dashboard = () => {
     if (!window.confirm(`Delete ALL ${filter}?`)) return
     try { for (const c of conversations) await api.delete(`/conversations/${c.roomId}`); toast.success('Done'); loadData() } catch { toast.error('Failed') }
   }
-
   const getMoodEmoji = (mood?: string) => {
     switch (mood) { case 'Good': return '😄'; case 'Okay': return '🙂'; case 'Neutral': return '😐'; case 'Sad': return '😔'; case 'Struggling': return '😢'; default: return ''; }
   }
-
   const filtered = conversations.filter(c => c.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) || c.roomId?.toLowerCase().includes(searchTerm.toLowerCase()))
 
   return (
-    <div className="min-h-screen hero-gradient pt-20 px-4">
+    <div className="min-h-screen hero-gradient grid-bg pt-20 px-4">
       <div className="container mx-auto">
+        {/* Futuristic Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-5xl font-black bg-gradient-to-r from-primary-600 via-indigo-600 to-teal-500 bg-clip-text text-transparent">Support Dashboard</h1>
-            <p className="text-gray-500 mt-1">Real-time overview of all conversations</p>
+            <h1 className="text-6xl font-black tracking-tighter">
+              <span className="bg-gradient-to-r from-purple-400 via-blue-500 to-cyan-400 bg-clip-text text-transparent neon-text">
+                // DASHBOARD
+              </span>
+            </h1>
+            <p className="text-gray-500 mt-2 font-mono text-sm tracking-wide">SYS.ONLINE • NODE.ACTIVE • {new Date().toLocaleTimeString()}</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <StaffStatus />
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={requestNotificationPermission}
-              className={`px-5 py-3 rounded-2xl text-sm font-semibold flex items-center space-x-2 transition-all ${notificationsEnabled ? 'bg-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30'}`}>
+              className={`px-6 py-3 rounded-xl text-sm font-bold flex items-center space-x-2 transition-all border ${
+                notificationsEnabled ? 'bg-green-500/20 border-green-500/50 text-green-400 neon-glow' : 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400'
+              }`}>
               {notificationsEnabled ? <HiBellAlert className="w-5 h-5" /> : <HiBell className="w-5 h-5" />}
-              <span>{notificationsEnabled ? 'Alerts ON' : 'Enable Alerts'}</span>
+              <span>{notificationsEnabled ? 'ALERTS ONLINE' : 'ENABLE ALERTS'}</span>
             </motion.button>
           </div>
         </motion.div>
-        <StaffActivity />
+
+        {/* Alert */}
         {newMessageAlert && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-            className="mb-6 p-5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-2xl shadow-2xl flex items-center justify-between cursor-pointer animate-glow"
+            className="mb-8 p-6 bg-gradient-to-r from-purple-900/80 via-blue-900/80 to-cyan-900/80 border border-purple-500/50 rounded-2xl flex items-center justify-between cursor-pointer animate-neon-pulse"
             onClick={() => navigate(`/support/${newMessageAlert.roomId}`)}>
-            <div className="flex items-center space-x-3"><span className="text-3xl animate-bounce">🔔</span><div><p className="font-bold text-lg">New message from {newMessageAlert.senderName}!</p><p className="text-blue-100 text-sm">Click to respond immediately</p></div></div>
-            <motion.button whileHover={{ scale: 1.1 }} className="px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold text-sm">Reply Now →</motion.button>
+            <div className="flex items-center space-x-4">
+              <span className="text-3xl animate-bounce">⚡</span>
+              <div>
+                <p className="font-bold text-xl text-white">INCOMING: {newMessageAlert.senderName}</p>
+                <p className="text-purple-200 text-sm font-mono">Click to respond immediately</p>
+              </div>
+            </div>
+            <motion.button whileHover={{ scale: 1.1 }} className="px-8 py-4 bg-white/10 border border-white/30 text-white rounded-xl font-bold text-sm backdrop-blur-sm hover:bg-white/20">[ REPLY ]</motion.button>
           </motion.div>
         )}
+
+        {/* Stats - Futuristic Cards */}
         <div className="grid grid-cols-3 gap-6 mb-8">
-          {[{ label: 'Total Chats', value: stats.totalConversations || 0, gradient: 'from-blue-500 to-cyan-500', emoji: '💬' },{ label: 'Active Now', value: stats.activeConversations || 0, gradient: 'from-green-500 to-teal-500', emoji: '🟢' },{ label: 'Closed', value: stats.closedConversations || 0, gradient: 'from-gray-500 to-slate-500', emoji: '📁' }].map((stat, i) => (
-            <motion.div key={stat.label} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="glass-stat rounded-2xl">
-              <div className="flex items-center justify-between"><div><p className="text-sm text-gray-500 font-medium">{stat.label}</p><p className="text-4xl font-black mt-1">{stat.value}</p></div><div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-2xl shadow-lg`}>{stat.emoji}</div></div>
+          {[
+            { label: 'TOTAL CHATS', value: stats.totalConversations || 0, color: 'from-purple-500 to-blue-500', icon: '📡' },
+            { label: 'ACTIVE NOW', value: stats.activeConversations || 0, color: 'from-green-500 to-cyan-500', icon: '🟢' },
+            { label: 'ARCHIVED', value: stats.closedConversations || 0, color: 'from-gray-500 to-slate-500', icon: '📁' },
+          ].map((stat, i) => (
+            <motion.div key={stat.label} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+              className="stat-card scan-line group cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 font-mono tracking-widest mb-2">{stat.label}</p>
+                  <p className="text-5xl font-black bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">{stat.value}</p>
+                </div>
+                <div className={`text-4xl opacity-50 group-hover:opacity-100 transition-opacity`}>{stat.icon}</div>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </motion.div>
           ))}
         </div>
-        <div className="flex items-center space-x-2 mb-6">
+
+        {/* Filter Tabs - Cyberpunk Style */}
+        <div className="flex items-center space-x-3 mb-6">
           {['active', 'closed'].map((f) => (
             <motion.button key={f} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setFilter(f as 'active' | 'closed')}
-              className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all ${filter === f ? 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white shadow-xl' : 'glass-card hover:shadow-lg'}`}>
-              {f === 'active' ? '🟢 Active Chats' : '📁 Closed Chats'}
+              className={`px-6 py-3 rounded-xl text-sm font-bold font-mono tracking-wider transition-all border ${
+                filter === f 
+                  ? 'bg-purple-500/20 border-purple-500/50 text-purple-300 neon-glow' 
+                  : 'bg-gray-900/50 border-gray-700/50 text-gray-500 hover:border-gray-600'
+              }`}>
+              {f === 'active' ? '◉ ACTIVE' : '◎ CLOSED'}
             </motion.button>
           ))}
           {conversations.length > 0 && (
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleDeleteAll} className="ml-auto px-5 py-3 bg-red-500 text-white rounded-2xl text-sm font-bold hover:bg-red-600 shadow-lg flex items-center space-x-2"><HiTrash className="w-4 h-4" /><span>Clear All</span></motion.button>
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleDeleteAll}
+              className="ml-auto px-5 py-3 bg-red-500/20 border border-red-500/50 text-red-400 rounded-xl text-sm font-bold font-mono hover:bg-red-500/30 flex items-center space-x-2">
+              <HiTrash className="w-4 h-4" /><span>CLEAR_ALL()</span>
+            </motion.button>
           )}
         </div>
-        <div className="relative mb-6"><HiMagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search conversations..." className="w-full pl-12 pr-4 py-4 glass-card text-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" /></div>
-        {isLoading ? <div className="flex justify-center py-20"><div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" /></div> :
-         filtered.length === 0 ? <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20"><div className="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6 animate-float"><HiChatBubbleLeftRight className="w-12 h-12 text-gray-400" /></div><p className="text-xl font-semibold text-gray-500">No {filter} conversations</p></motion.div> :
-         <div className="space-y-4">{filtered.map((c, i) => (
-           <motion.div key={c.roomId} initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="glass-card glass-card-hover rounded-2xl p-6 animate-border-glow">
-             <div className="flex items-center justify-between">
-               <div className="flex items-center space-x-4">
-                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold ${c.status === 'active' ? 'bg-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-gray-400 text-white'}`}>{c.displayName?.charAt(0)?.toUpperCase()}</div>
-                 <div>
-                   <div className="flex items-center space-x-3"><h3 className="text-lg font-bold">{c.displayName}</h3><span className={`px-3 py-1 rounded-full text-xs font-semibold ${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>{c.status}</span>{c.anonymous && <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">Anon</span>}{c.mood && <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">{getMoodEmoji(c.mood)} {c.mood}</span>}</div>
-                   <div className="text-sm text-gray-500 mt-1">Room {c.roomId?.substring(0, 8)}... • {format(new Date(c.createdAt), 'MMM d, h:mm a')}</div>
-                 </div>
-               </div>
-               <div className="flex items-center space-x-3">
-                 {c.status === 'active' ? (
-                   <><motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => navigate(`/support/${c.roomId}`)} className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl text-sm font-bold shadow-lg hover:shadow-xl">Reply</motion.button>
-                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => handleStatusChange(c.roomId, 'closed')} className="p-3 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-xl transition-all"><HiArchiveBox className="w-5 h-5" /></motion.button></>
-                 ) : <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleStatusChange(c.roomId, 'active')} className="px-5 py-3 bg-green-100 text-green-700 rounded-2xl text-sm font-bold hover:bg-green-200 flex items-center space-x-2"><HiArrowPath className="w-4 h-4" /><span>Reopen</span></motion.button>}
-                 {deleteConfirm === c.roomId ? (
-                   <div className="flex space-x-2"><button onClick={() => handleDelete(c.roomId)} className="px-4 py-2 bg-red-500 text-white rounded-xl text-xs font-bold">Confirm</button><button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 bg-gray-200 rounded-xl text-xs">Cancel</button></div>
-                 ) : <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setDeleteConfirm(c.roomId)} className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"><HiTrash className="w-5 h-5" /></motion.button>}
-               </div>
-             </div>
-           </motion.div>
-         ))}</div>}
+
+        {/* Search */}
+        <div className="relative mb-6">
+          <HiMagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+            placeholder="> SEARCH_CONVERSATIONS..."
+            className="w-full pl-12 pr-4 py-4 bg-gray-900/50 border border-gray-700/50 rounded-xl font-mono text-sm text-gray-300 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all placeholder-gray-600" />
+        </div>
+
+        {/* Conversations */}
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
+            <div className="w-24 h-24 bg-gray-900/50 border border-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-6 animate-float">
+              <HiGlobeAlt className="w-12 h-12 text-gray-600" />
+            </div>
+            <p className="text-xl font-bold text-gray-500 font-mono">NO_{filter.toUpperCase()}_CHATS</p>
+            <p className="text-gray-600 mt-2 font-mono text-sm">Waiting for incoming connections...</p>
+          </motion.div>
+        ) : (
+          <div className="space-y-4">
+            {filtered.map((c, i) => (
+              <motion.div key={c.roomId} initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+                className="glass-card rounded-2xl p-6 animate-border-flow group hover:border-purple-500/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black border ${
+                      c.status === 'active' ? 'bg-green-500/20 border-green-500/50 text-green-400' : 'bg-gray-500/20 border-gray-500/50 text-gray-400'
+                    }`}>
+                      {c.displayName?.charAt(0)?.toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-3">
+                        <h3 className="text-lg font-bold text-white">{c.displayName}</h3>
+                        <span className={`px-3 py-1 rounded-lg text-xs font-mono font-bold border ${
+                          c.status === 'active' ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                        }`}>{c.status.toUpperCase()}</span>
+                        {c.anonymous && <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold bg-purple-500/10 border border-purple-500/30 text-purple-400">ANON</span>}
+                        {c.mood && <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold bg-yellow-500/10 border border-yellow-500/30 text-yellow-400">{getMoodEmoji(c.mood)} {c.mood.toUpperCase()}</span>}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1 font-mono">
+                        ID:{c.roomId?.substring(0, 8)}... • {format(new Date(c.createdAt), 'MMM d, HH:mm')}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    {c.status === 'active' ? (
+                      <>
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => navigate(`/support/${c.roomId}`)}
+                          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl text-sm font-bold font-mono border border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20">
+                          [ REPLY ]
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => handleStatusChange(c.roomId, 'closed')}
+                          className="p-3 text-gray-500 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-xl transition-all border border-transparent hover:border-yellow-500/30">
+                          <HiArchiveBox className="w-5 h-5" />
+                        </motion.button>
+                      </>
+                    ) : (
+                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleStatusChange(c.roomId, 'active')}
+                        className="px-5 py-3 bg-green-500/10 border border-green-500/30 text-green-400 rounded-xl text-sm font-bold font-mono hover:bg-green-500/20 flex items-center space-x-2">
+                        <HiArrowPath className="w-4 h-4" /><span>REOPEN</span>
+                      </motion.button>
+                    )}
+                    {deleteConfirm === c.roomId ? (
+                      <div className="flex space-x-2">
+                        <button onClick={() => handleDelete(c.roomId)} className="px-4 py-2 bg-red-500 text-white rounded-lg text-xs font-bold font-mono">CONFIRM</button>
+                        <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 bg-gray-700 rounded-lg text-xs font-mono">CANCEL</button>
+                      </div>
+                    ) : (
+                      <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setDeleteConfirm(c.roomId)}
+                        className="p-3 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all border border-transparent hover:border-red-500/30">
+                        <HiTrash className="w-5 h-5" />
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
