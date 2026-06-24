@@ -87,3 +87,18 @@ app.get('/api/reset-admin', async (req, res) => {
   res.json({ message: 'Admin reset. Login with malek / SaveALife2024!' });
 });
 
+
+// Auto-offline: mark staff as offline if no heartbeat for 5 minutes
+setInterval(async () => {
+  try {
+    const fiveMinAgo = new Date(Date.now() - 300000);
+    const { Admin } = require('./models/Admin');
+    const result = await Admin.updateMany(
+      { currentStatus: { $in: ['online', 'busy'] }, lastActive: { $lt: fiveMinAgo } },
+      { currentStatus: 'offline' }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`Set ${result.modifiedCount} inactive staff to offline`);
+    }
+  } catch (e) {}
+}, 60000); // Check every 60 seconds
