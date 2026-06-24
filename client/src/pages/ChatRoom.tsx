@@ -11,11 +11,11 @@ import toast from 'react-hot-toast'
 const ChatRoom = () => {
   const { roomId } = useParams<{ roomId: string }>()
   const navigate = useNavigate()
-  const { socket, messages, displayName, isConnected, showSuicideModal, setShowSuicideModal, addMessage } = useChat()
+  const { socket, messages, displayName, isConnected, showSuicideModal, setShowSuicideModal } = useChat()
   const [newMessage, setNewMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [typingUser, setTypingUser] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
